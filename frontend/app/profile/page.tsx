@@ -49,7 +49,7 @@ export default function ProfilePage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 rounded-full bg-[#D32F2F] text-white flex items-center justify-center text-2xl font-medium">{profile?.full_name?.charAt(0) || 'U'}</div>
+              <div className="w-16 h-16 rounded-full bg-[#D32F2F] text-white flex items-center justify-center text-2xl font-medium">{profile?.fullName?.charAt(0) || 'U'}</div>
               <div>
                 <h1 className="text-2xl font-bold text-[#1A1A1A]">My Profile</h1>
                 <p className="text-gray-500">{profile?.email}</p>

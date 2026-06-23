@@ -27,8 +27,8 @@ export function Navbar() {
   const dashboardLink = profile?.role === 'admin'
     ? '/admin'
     : profile?.role === 'seller'
-    ? '/seller'
-    : '/buyer';
+      ? '/seller'
+      : '/buyer';
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -59,14 +59,14 @@ export function Navbar() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-[#D32F2F] text-white flex items-center justify-center text-sm font-medium">
-                        {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+                        {profile?.fullName?.charAt(0) || user.email?.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-gray-700">{profile?.full_name || 'Account'}</span>
+                      <span className="text-sm font-medium text-gray-700">{profile?.fullName || 'Account'}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <div className="px-3 py-2">
-                      <p className="text-sm font-medium">{profile?.full_name}</p>
+                      <p className="text-sm font-medium">{profile?.fullName}</p>
                       <p className="text-xs text-gray-500">{user.email}</p>
                       <Badge variant="outline" className="mt-1 text-xs capitalize">{profile?.role}</Badge>
                     </div>
