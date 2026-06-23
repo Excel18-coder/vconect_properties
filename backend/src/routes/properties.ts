@@ -4,6 +4,7 @@ import Property from '../models/Property';
 import Favorite from '../models/Favorite';
 import { protect, AuthRequest } from '../middleware/auth';
 import { requireSeller } from '../middleware/roles';
+import { SortOrder } from 'mongoose';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.get('/', async (req, res: Response) => {
         if (bathrooms) filter.bathrooms = { $gte: Number(bathrooms) };
         if (featured === 'true') filter.isFeatured = true;
 
-        const sortMap: Record<string, Record<string, number>> = {
+        const sortMap: Record<string, Record<string, SortOrder>> = {
             newest: { createdAt: -1 },
             oldest: { createdAt: 1 },
             price_asc: { price: 1 },
