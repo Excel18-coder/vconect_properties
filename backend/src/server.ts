@@ -20,7 +20,7 @@ connectDB();
 // CORS — allow frontend origin
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://localhost:3001',
+    'http://localhost:3001', 'https://vconect-properties.vercel.app',
 ];
 
 app.use(
