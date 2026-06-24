@@ -8,7 +8,7 @@
 ## Backend Deployment (Render)
 
 ### Status: ✅ LIVE AND OPERATIONAL
-- **URL:** https://vconect-properties.onrender.com
+- **URL:** https://vconect-properties-1.onrender.com
 - **Health Check:** ✅ Passing
 - **Database:** ✅ Connected (MongoDB Atlas)
 - **Response Time:** ✅ Fast and responsive
@@ -41,7 +41,7 @@
 ### Configuration Status:
 | Configuration | Status | Value |
 |---------------|--------|-------|
-| NEXT_PUBLIC_API_URL | ✅ Set | https://vconect-properties.onrender.com/api |
+| NEXT_PUBLIC_API_URL | ✅ Set | https://vconect-properties-1.onrender.com/api |
 | Build Script | ✅ Valid | `next build` |
 | Start Script | ✅ Valid | `next start` |
 
@@ -80,7 +80,7 @@
 
 ### Frontend (.env on Vercel)
 ```
-✅ NEXT_PUBLIC_API_URL=https://vconect-properties.onrender.com/api
+✅ NEXT_PUBLIC_API_URL=https://vconect-properties-1.onrender.com/api
 ```
 
 ---
@@ -126,7 +126,7 @@ If you encounter issues in the future:
 
 1. **"Route not found" errors:**
    - Check if `NEXT_PUBLIC_API_URL` is set on Vercel
-   - Ensure backend URL is correct: `https://vconect-properties.onrender.com/api`
+   - Ensure backend URL is correct: `https://vconect-properties-1.onrender.com/api`
 
 2. **CORS errors:**
    - Check backend CORS whitelist includes your Vercel URL
