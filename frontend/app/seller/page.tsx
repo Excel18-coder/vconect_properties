@@ -61,7 +61,7 @@ export default function SellerDashboard() {
                             <CardDescription>Only seller accounts can access this dashboard</CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-4">
-                            <Link href="/auth/login" className="w-full">
+                            <Link href="/auth/signin" className="w-full">
                                 <Button className="w-full bg-[#D32F2F] hover:bg-[#B71C1C]">Sign In</Button>
                             </Link>
                             <Link href="/auth/signup" className="w-full">

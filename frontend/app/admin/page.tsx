@@ -145,7 +145,7 @@ export default function AdminDashboard() {
             <p className="text-gray-600 mb-8">
               This area is reserved for the platform administrator. Please sign in with the authorized admin credentials.
             </p>
-            <Link href="/auth/login" className="inline-block w-full bg-[#D32F2F] text-white py-3 rounded-xl font-bold hover:bg-[#B71C1C] transition-all shadow-lg shadow-red-200">
+            <Link href="/auth/signin" className="inline-block w-full bg-[#D32F2F] text-white py-3 rounded-xl font-bold hover:bg-[#B71C1C] transition-all shadow-lg shadow-red-200">
               Go to Login
             </Link>
           </div>

@@ -95,7 +95,7 @@ export default function SellerProperties() {
                         <AlertCircle className="h-12 w-12 text-[#D32F2F] mx-auto mb-4" />
                         <h2 className="text-xl font-bold mb-2">Access Denied</h2>
                         <p className="text-gray-600 mb-6">You must be logged in as a seller to access this page.</p>
-                        <Link href="/auth/login" className="bg-[#D32F2F] text-white px-6 py-2 rounded-lg hover:bg-[#B71C1C]">Sign In</Link>
+                        <Link href="/auth/signin" className="bg-[#D32F2F] text-white px-6 py-2 rounded-lg hover:bg-[#B71C1C]">Sign In</Link>
                     </Card>
                 </main>
                 <Footer />

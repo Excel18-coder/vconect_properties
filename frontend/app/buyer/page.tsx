@@ -50,7 +50,7 @@ export default function BuyerDashboard() {
                             <CardDescription>Please sign in to view your dashboard</CardDescription>
                         </CardHeader>
                         <CardContent className="flex justify-center">
-                            <Link href="/auth/login" className="bg-[#D32F2F] text-white px-6 py-2 rounded-lg hover:bg-[#B71C1C] transition-colors">
+                            <Link href="/auth/signin" className="bg-[#D32F2F] text-white px-6 py-2 rounded-lg hover:bg-[#B71C1C] transition-colors">
                                 Sign In
                             </Link>
                         </CardContent>
