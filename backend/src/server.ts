@@ -23,6 +23,7 @@ connectDB();
 // ===============================
 
 const allowedOrigins = [
+    'www.vconect.co.ke',
     'https://vconect-properties.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001',

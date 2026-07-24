@@ -40,6 +40,8 @@ const steps = [
     { id: 'images', title: 'Images', icon: <ImageIcon className="h-4 w-4" /> },
 ];
 
+const MAX_IMAGES = 20;
+
 export default function NewProperty() {
     const { user } = useAuth();
     const router = useRouter();
@@ -81,10 +83,21 @@ export default function NewProperty() {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
+        const remainingSlots = MAX_IMAGES - images.length;
+        if (remainingSlots <= 0) {
+            toast.error(`You can upload up to ${MAX_IMAGES} images per property`);
+            return;
+        }
+
         setUploading(true);
         const uploadedImages: any[] = [...images];
+        const filesToUpload = files.slice(0, remainingSlots);
 
-        for (const file of files) {
+        if (files.length > remainingSlots) {
+            toast.info(`Only the first ${remainingSlots} image${remainingSlots === 1 ? '' : 's'} will be uploaded.`);
+        }
+
+        for (const file of filesToUpload) {
             const formDataUpload = new FormData();
             formDataUpload.append('image', file);
 
@@ -106,12 +119,19 @@ export default function NewProperty() {
 
         setImages(uploadedImages as any);
         setUploading(false);
+        e.target.value = '';
     };
 
     const removeImage = async (publicId: string) => {
         try {
             await api.delete(`/upload/${encodeURIComponent(publicId)}`);
-            setImages(prev => prev.filter((img: any) => img.publicId !== publicId));
+            setImages(prev => {
+                const next = prev.filter((img: any) => img.publicId !== publicId);
+                if (next.length > 0 && !next.some((img: any) => img.isPrimary)) {
+                    next[0].isPrimary = true;
+                }
+                return next;
+            });
         } catch (error) {
             toast.error('Failed to delete image from server');
         }
@@ -316,16 +336,18 @@ export default function NewProperty() {
                                         accept="image/*"
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                         onChange={handleImageUpload}
-                                        disabled={uploading}
+                                        disabled={uploading || images.length >= MAX_IMAGES}
                                     />
                                     <div className="flex flex-col items-center">
                                         <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
                                             {uploading ? <Loader2 className="h-8 w-8 animate-spin text-[#D32F2F]" /> : <Upload className="h-8 w-8 text-[#D32F2F]" />}
                                         </div>
                                         <h3 className="text-lg font-bold">Click or drag images to upload</h3>
-                                        <p className="text-gray-500 text-sm mt-1">Upload high-quality images of your property (Max 10MB per file)</p>
+                                        <p className="text-gray-500 text-sm mt-1">Upload high-quality images of your property (up to {MAX_IMAGES} images, max 10MB per file)</p>
                                     </div>
                                 </div>
+
+                                <p className="text-sm text-gray-500">{images.length}/{MAX_IMAGES} images added</p>
 
                                 {images.length > 0 && (
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">

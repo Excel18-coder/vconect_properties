@@ -26,10 +26,11 @@ export default function FavoritesPage() {
     try {
       const response: any = await api.get('/favorites');
       if (response.success) {
-        setFavorites(response.data.map((f: any) => f.propertyId).filter(Boolean));
+        setFavorites(Array.isArray(response.data) ? response.data.filter(Boolean) : []);
       }
     } catch (error) {
       toast.error('Failed to load favorites');
+      setFavorites([]);
     } finally {
       setLoading(false);
     }
@@ -38,7 +39,7 @@ export default function FavoritesPage() {
   const removeFavorite = async (propertyId: string) => {
     try {
       await api.delete(`/favorites/${propertyId}`);
-      setFavorites(favorites.filter((f) => f._id !== propertyId));
+      setFavorites((prev) => prev.filter((f) => f._id !== propertyId));
       toast.success('Removed from favorites');
     } catch (error) {
       toast.error('Failed to remove from favorites');

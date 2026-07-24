@@ -72,26 +72,6 @@ router.get('/', async (req, res: Response) => {
     }
 });
 
-// GET /api/properties/:id — public
-router.get('/:id', async (req, res: Response) => {
-    try {
-        const property = await Property.findById(req.params.id)
-            .populate('sellerId', 'fullName email phone agencyName verificationStatus avatarUrl');
-
-        if (!property) {
-            res.status(404).json({ success: false, message: 'Property not found' });
-            return;
-        }
-
-        // Increment view count asynchronously
-        Property.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }).exec();
-
-        res.json({ success: true, data: property });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
 // POST /api/properties — seller only
 router.post('/', protect, requireSeller, async (req: AuthRequest, res: Response) => {
     try {
@@ -112,7 +92,7 @@ router.post('/', protect, requireSeller, async (req: AuthRequest, res: Response)
             fullAddress: z.string().optional(),
             amenities: z.array(z.string()).default([]),
             features: z.array(z.string()).default([]),
-            images: z.array(z.object({ url: z.string(), publicId: z.string(), isPrimary: z.boolean().default(false), sortOrder: z.number().default(0) })).default([]),
+            images: z.array(z.object({ url: z.string(), publicId: z.string(), isPrimary: z.boolean().default(false), sortOrder: z.number().default(0) })).max(20, 'You can upload up to 20 images per property').default([]),
             virtualTourLink: z.string().url().optional().or(z.literal('')),
         });
 
@@ -124,6 +104,76 @@ router.post('/', protect, requireSeller, async (req: AuthRequest, res: Response)
             res.status(400).json({ success: false, message: 'Validation error', errors: error.errors });
             return;
         }
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/properties/seller/mine — seller's own properties
+router.get('/seller/mine', protect, requireSeller, async (req: AuthRequest, res: Response) => {
+    try {
+        const properties = await Property.find({ sellerId: req.user!._id })
+            .sort({ createdAt: -1 })
+            .lean();
+        res.json({ success: true, data: properties });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/properties/seller/stats — seller's dashboard stats
+router.get('/seller/stats', protect, requireSeller, async (req: AuthRequest, res: Response) => {
+    try {
+        const [
+            totalListings,
+            activeListings,
+            pendingListings,
+            totalViews,
+            totalFavorites,
+        ] = await Promise.all([
+            Property.countDocuments({ sellerId: req.user!._id }),
+            Property.countDocuments({ sellerId: req.user!._id, status: 'active' }),
+            Property.countDocuments({ sellerId: req.user!._id, status: 'pending_approval' }),
+            Property.aggregate([
+                { $match: { sellerId: req.user!._id } },
+                { $group: { _id: null, total: { $sum: '$viewsCount' } } },
+            ]),
+            Property.aggregate([
+                { $match: { sellerId: req.user!._id } },
+                { $group: { _id: null, total: { $sum: '$favoritesCount' } } },
+            ]),
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                totalListings,
+                activeListings,
+                pendingListings,
+                totalViews: totalViews[0]?.total || 0,
+                totalFavorites: totalFavorites[0]?.total || 0,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/properties/:id — public
+router.get('/:id', async (req, res: Response) => {
+    try {
+        const property = await Property.findById(req.params.id)
+            .populate('sellerId', 'fullName email phone agencyName verificationStatus avatarUrl');
+
+        if (!property) {
+            res.status(404).json({ success: false, message: 'Property not found' });
+            return;
+        }
+
+        // Increment view count asynchronously
+        Property.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }).exec();
+
+        res.json({ success: true, data: property });
+    } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -180,54 +230,5 @@ router.delete('/:id', protect, async (req: AuthRequest, res: Response) => {
     }
 });
 
-// GET /api/properties/seller/mine — seller's own properties
-router.get('/seller/mine', protect, requireSeller, async (req: AuthRequest, res: Response) => {
-    try {
-        const properties = await Property.find({ sellerId: req.user!._id })
-            .sort({ createdAt: -1 })
-            .lean();
-        res.json({ success: true, data: properties });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// GET /api/properties/seller/stats — seller's dashboard stats
-router.get('/seller/stats', protect, requireSeller, async (req: AuthRequest, res: Response) => {
-    try {
-        const [
-            totalListings,
-            activeListings,
-            pendingListings,
-            totalViews,
-            totalFavorites,
-        ] = await Promise.all([
-            Property.countDocuments({ sellerId: req.user!._id }),
-            Property.countDocuments({ sellerId: req.user!._id, status: 'active' }),
-            Property.countDocuments({ sellerId: req.user!._id, status: 'pending_approval' }),
-            Property.aggregate([
-                { $match: { sellerId: req.user!._id } },
-                { $group: { _id: null, total: { $sum: '$viewsCount' } } },
-            ]),
-            Property.aggregate([
-                { $match: { sellerId: req.user!._id } },
-                { $group: { _id: null, total: { $sum: '$favoritesCount' } } },
-            ]),
-        ]);
-
-        res.json({
-            success: true,
-            data: {
-                totalListings,
-                activeListings,
-                pendingListings,
-                totalViews: totalViews[0]?.total || 0,
-                totalFavorites: totalFavorites[0]?.total || 0,
-            },
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
 
 export default router;

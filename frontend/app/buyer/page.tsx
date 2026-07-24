@@ -14,8 +14,8 @@ import Link from 'next/link';
 
 export default function BuyerDashboard() {
     const { user } = useAuth();
-    const [favorites, setFavorites] = useState([]);
-    const [inquiries, setInquiries] = useState([]);
+    const [favorites, setFavorites] = useState<any[]>([]);
+    const [inquiries, setInquiries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -25,10 +25,12 @@ export default function BuyerDashboard() {
                     api.get('/favorites'),
                     api.get('/inquiries'),
                 ]);
-                setFavorites(favsRes.data.data);
-                setInquiries(inqRes.data.data);
+                setFavorites(Array.isArray(favsRes.data) ? favsRes.data : []);
+                setInquiries(Array.isArray(inqRes.data) ? inqRes.data : []);
             } catch (error) {
                 console.error('Failed to fetch buyer data:', error);
+                setFavorites([]);
+                setInquiries([]);
             } finally {
                 setLoading(false);
             }
@@ -123,10 +125,10 @@ export default function BuyerDashboard() {
                                                         <h3 className="text-lg font-semibold text-[#1A1A1A]">
                                                             Inquiry for: <Link href={`/properties/${inquiry.propertyId?._id}`} className="text-[#D32F2F] hover:underline">{inquiry.propertyId?.title || 'Property'}</Link>
                                                         </h3>
-                                                        <p className="text-gray-500 text-sm">Submitted on {new Date(inquiry.createdAt).toLocaleDateString()}</p>
+                                                        <p className="text-gray-500 text-sm">Submitted on {inquiry.createdAt ? new Date(inquiry.createdAt).toLocaleDateString() : 'Recently'}</p>
                                                     </div>
                                                     <Badge variant={inquiry.status === 'resolved' ? 'outline' : 'secondary'} className={inquiry.status === 'resolved' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
-                                                        {inquiry.status.charAt(0).toUpperCase() + inquiry.status.slice(1)}
+                                                        {inquiry.status ? inquiry.status.charAt(0).toUpperCase() + inquiry.status.slice(1) : 'New'}
                                                     </Badge>
                                                 </div>
                                                 <div className="bg-gray-50 p-4 rounded-lg">
