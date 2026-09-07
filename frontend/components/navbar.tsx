@@ -35,8 +35,8 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Image src="/images/image.png" alt="VConnect Properties" width={40} height={40} className="rounded-md" />
-            <span className="text-xl font-bold text-[#1A1A1A] hidden sm:inline">VConnect</span>
+            <Image src="/images/image.png" alt="vconect Properties" width={40} height={40} className="rounded-md" />
+            <span className="text-xl font-bold text-[#1A1A1A] hidden sm:inline">vconect</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">

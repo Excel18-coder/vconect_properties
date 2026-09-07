@@ -3,9 +3,9 @@
 import { Star, Quote } from 'lucide-react';
 
 const testimonials = [
-  { name: 'Dyvine Eshiuma', role: 'Home Buyer', avatar: 'DE', rating: 5, text: 'VConnect made finding our dream home so easy. The verified sellers gave us confidence, and the team was incredibly supportive throughout the process.' },
-  { name: 'Excel Baraka', role: 'Property Investor', avatar: 'EB', rating: 5, text: 'As an investor, I need reliable data and verified listings. VConnect delivers both. Their analytics dashboard helps me make informed decisions quickly.' },
-  { name: 'Ian Valinyala', role: 'First-time Buyer', avatar: 'IV', rating: 5, text: 'Being a first-time buyer was daunting, but VConnect guided me every step. From search to closing, the experience was seamless and professional.' },
+  { name: 'Dyvine Eshiuma', role: 'Home Buyer', avatar: 'DE', rating: 5, text: 'vconect made finding our dream home so easy. The verified sellers gave us confidence, and the team was incredibly supportive throughout the process.' },
+  { name: 'Excel Baraka', role: 'Property Investor', avatar: 'EB', rating: 5, text: 'As an investor, I need reliable data and verified listings. vconect delivers both. Their analytics dashboard helps me make informed decisions quickly.' },
+  { name: 'Ian Valinyala', role: 'First-time Buyer', avatar: 'IV', rating: 5, text: 'Being a first-time buyer was daunting, but vconect guided me every step. From search to closing, the experience was seamless and professional.' },
 ];
 
 export function Testimonials() {
@@ -14,7 +14,7 @@ export function Testimonials() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-[#1A1A1A] mb-3">What Our Clients Say</h2>
-          <p className="text-gray-600 max-w-xl mx-auto">Hear from buyers and sellers who have successfully used VConnect Properties.</p>
+          <p className="text-gray-600 max-w-xl mx-auto">Hear from buyers and sellers who have successfully used vconect.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((t) => (

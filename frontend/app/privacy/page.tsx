@@ -9,7 +9,7 @@ export default function PrivacyPage() {
         <div className="bg-white rounded-3xl shadow-xl p-10">
           <h1 className="text-4xl font-bold text-[#1A1A1A] mb-6">Privacy Policy</h1>
           <p className="text-gray-600 leading-relaxed mb-4">
-            We value your privacy. This policy explains how we collect, use, and protect your personal information when you use VConnect Properties.
+            We value your privacy. This policy explains how we collect, use, and protect your personal information when you use vconect.
           </p>
           <div className="space-y-6">
             <div>

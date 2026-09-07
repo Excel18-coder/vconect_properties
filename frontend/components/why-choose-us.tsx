@@ -16,7 +16,7 @@ export function WhyChooseUs() {
     <section className="py-16 bg-[#1A1A1A] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-3">Why Choose VConnect</h2>
+          <h2 className="text-3xl font-bold mb-3">Why Choose vconect</h2>
           <p className="text-gray-400 max-w-xl mx-auto">We provide a seamless property search experience with verified listings and professional support.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

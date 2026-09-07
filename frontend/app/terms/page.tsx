@@ -9,7 +9,7 @@ export default function TermsPage() {
         <div className="bg-white rounded-3xl shadow-xl p-10">
           <h1 className="text-4xl font-bold text-[#1A1A1A] mb-6">Terms of Service</h1>
           <p className="text-gray-600 leading-relaxed mb-4">
-            These terms govern your use of VConnect Properties. By using the site, you agree to the terms outlined here.
+            These terms govern your use of vconect. By using the site, you agree to the terms outlined here.
           </p>
           <div className="space-y-6">
             <div>
@@ -27,7 +27,7 @@ export default function TermsPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-2">Modifications</h2>
               <p className="text-gray-600 leading-relaxed">
-                VConnect Properties may update these terms at any time. Continued use of the site after updates means you accept the new terms.
+                vconect may update these terms at any time. Continued use of the site after updates means you accept the new terms.
               </p>
             </div>
           </div>

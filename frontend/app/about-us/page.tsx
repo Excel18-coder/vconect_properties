@@ -9,7 +9,7 @@ export default function AboutUsPage() {
         <div className="bg-white rounded-3xl shadow-xl p-10">
           <h1 className="text-4xl font-bold text-[#1A1A1A] mb-6">About Us</h1>
           <p className="text-gray-600 leading-relaxed mb-4">
-            VConnect Properties is a premium real estate marketplace dedicated to connecting buyers, sellers, and agents across Kenya.
+            vconect is a premium real estate marketplace dedicated to connecting buyers, sellers, and agents across Kenya.
             Our platform makes it easy to discover verified properties, manage inquiries, and close transactions with confidence.
           </p>
           <p className="text-gray-600 leading-relaxed mb-4">

@@ -11,8 +11,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Image src="/images/image.png" alt="VConnect" width={40} height={40} className="rounded-md" />
-              <span className="text-xl font-bold">VConnect</span>
+              <Image src="/images/image.png" alt="vconect" width={40} height={40} className="rounded-md" />
+              <span className="text-xl font-bold">vconect</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Your trusted partner in finding the perfect property. We connect buyers with verified sellers across the region.
@@ -69,7 +69,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-[#2D2D2D] mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} VConnect Properties. All rights reserved.</p>
+          <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} vconect. All rights reserved.</p>
           <div className="flex gap-6 text-sm text-gray-500">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
