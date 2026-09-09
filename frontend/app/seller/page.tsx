@@ -119,6 +119,12 @@ export default function SellerDashboard() {
                         icon={<Eye className="h-5 w-5 text-[#D32F2F]" />}
                         color="bg-red-50"
                     />
+                    <StatCard
+                        title="Total Favorites"
+                        value={stats?.totalFavorites ?? 0}
+                        icon={<Heart className="h-5 w-5 text-pink-600" />}
+                        color="bg-pink-50"
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

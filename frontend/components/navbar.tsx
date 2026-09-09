@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from './auth-provider';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,6 +19,25 @@ import { Menu, X, Home, Search, Heart, User, LogOut, LayoutDashboard } from 'luc
 export function Navbar() {
   const { user, profile, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+
+  useEffect(() => {
+    const fetchFavoritesCount = async () => {
+      try {
+        const response: any = await api.get('/favorites');
+        const items = Array.isArray(response?.data) ? response.data : [];
+        setFavoritesCount(items.length);
+      } catch {
+        setFavoritesCount(0);
+      }
+    };
+
+    if (user) {
+      fetchFavoritesCount();
+    } else {
+      setFavoritesCount(0);
+    }
+  }, [user]);
 
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
@@ -35,7 +55,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Image src="/images/image.png" alt="vconect Properties" width={40} height={40} className="rounded-md" />
+            <Image src="/images/image.png" alt="vconect" width={40} height={40} className="rounded-md" />
             <span className="text-xl font-bold text-[#1A1A1A] hidden sm:inline">vconect</span>
           </Link>
 
@@ -51,8 +71,13 @@ export function Navbar() {
             {user ? (
               <>
                 <Link href="/buyer/favorites">
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-[#D32F2F]">
+                  <Button variant="ghost" size="icon" className="relative text-gray-600 hover:text-[#D32F2F]">
                     <Heart className="h-5 w-5" />
+                    {favoritesCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-[#D32F2F] text-white text-[10px] font-semibold flex items-center justify-center">
+                        {favoritesCount > 9 ? '9+' : favoritesCount}
+                      </span>
+                    )}
                   </Button>
                 </Link>
                 <DropdownMenu>

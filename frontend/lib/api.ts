@@ -34,7 +34,13 @@ api.interceptors.request.use(
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-    (response) => response.data,
+    (response) => {
+        const payload = response.data;
+        return {
+            ...payload,
+            data: payload?.data ?? payload?.user ?? payload,
+        };
+    },
     (error) => {
         if (error.response?.status === 401) {
             // Handle unauthorized (optional: logout user or redirect to login)

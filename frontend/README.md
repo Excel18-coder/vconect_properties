@@ -1,4 +1,4 @@
-# vconect_properties
+# vconect
 
 Property Listing Platform
  Made by The Vconect Team

@@ -45,7 +45,7 @@ export default function SignUpPage() {
               <Image src="/images/image.png" alt="VConnect" width={48} height={48} className="rounded-md" />
             </Link>
             <h1 className="text-2xl font-bold text-[#1A1A1A]">Create Account</h1>
-            <p className="text-gray-500 mt-1">Join VConnect Properties today</p>
+            <p className="text-gray-500 mt-1">Join Vconect today</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>

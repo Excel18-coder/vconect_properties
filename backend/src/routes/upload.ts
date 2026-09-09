@@ -24,7 +24,7 @@ router.post('/', protect, upload.single('image'), async (req: AuthRequest, res: 
         const fileStr = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
         const result = await cloudinary.uploader.upload(fileStr, {
-            folder: 'vconect_properties',
+            folder: 'vconect',
             transformation: [{ width: 1200, height: 900, crop: 'limit', quality: 'auto:good' }],
         });
 

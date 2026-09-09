@@ -17,6 +17,7 @@ export default function BuyerDashboard() {
     const [favorites, setFavorites] = useState<any[]>([]);
     const [inquiries, setInquiries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const openInquiries = inquiries.filter((inquiry: any) => inquiry.status !== 'resolved').length;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -70,6 +71,35 @@ export default function BuyerDashboard() {
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-[#1A1A1A]">Welcome back, {user.fullName}</h1>
                     <p className="text-gray-600">Manage your saved properties and inquiries</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    <Card className="bg-white border-none shadow-sm">
+                        <CardContent className="p-5">
+                            <p className="text-sm font-medium text-gray-500">Saved Properties</p>
+                            <h2 className="mt-2 text-3xl font-bold text-[#1A1A1A]">{loading ? '—' : favorites.length}</h2>
+                            <p className="mt-1 text-sm text-gray-500">Properties you’ve bookmarked</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white border-none shadow-sm">
+                        <CardContent className="p-5">
+                            <p className="text-sm font-medium text-gray-500">Open Inquiries</p>
+                            <h2 className="mt-2 text-3xl font-bold text-[#1A1A1A]">{loading ? '—' : openInquiries}</h2>
+                            <p className="mt-1 text-sm text-gray-500">Still waiting on responses</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white border-none shadow-sm sm:col-span-2 lg:col-span-1">
+                        <CardContent className="p-5 flex items-center justify-between gap-4">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Explore more</p>
+                                <h2 className="mt-2 text-xl font-semibold text-[#1A1A1A]">Find your next match</h2>
+                                <p className="mt-1 text-sm text-gray-500">Browse new listings and save your favorites.</p>
+                            </div>
+                            <Link href="/properties" className="shrink-0 inline-flex items-center justify-center h-11 px-4 rounded-lg bg-[#D32F2F] text-white font-medium hover:bg-[#B71C1C] transition-colors">
+                                Browse
+                            </Link>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <Tabs defaultValue="favorites" className="space-y-6">

@@ -2,7 +2,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { HeroSection } from '@/components/hero-section';
 import { PropertyCategories } from '@/components/property-categories';
-import { FeaturedProperties } from '@/components/featured-properties';
+import { HomepageSelection } from '@/components/homepage-selection';
 import { WhyChooseUs } from '@/components/why-choose-us';
 import { LatestListings } from '@/components/latest-listings';
 import { Statistics } from '@/components/statistics';
@@ -15,7 +15,7 @@ export default function Home() {
       <main className="flex-1">
         <HeroSection />
         <PropertyCategories />
-        <FeaturedProperties />
+        <HomepageSelection />
         <WhyChooseUs />
         <LatestListings />
         <Statistics />

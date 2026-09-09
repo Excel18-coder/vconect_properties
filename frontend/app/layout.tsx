@@ -4,11 +4,11 @@ import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
-  title: 'VConnect Properties - Find Your Perfect Home',
-  description: 'VConnect Properties is a premium real estate marketplace connecting buyers with verified sellers. Discover apartments, houses, villas, and commercial properties.',
+  title: 'Vconect - Find Your Perfect Home',
+  description: 'Vconect is a premium real estate marketplace connecting buyers with verified sellers. Discover apartments, houses, villas, and commercial properties.',
   keywords: 'real estate, property, house, apartment, villa, buy, rent, Kenya, Africa',
   openGraph: {
-    title: 'VConnect Properties - Find Your Perfect Home',
+    title: 'Vconect - Find Your Perfect Home',
     description: 'Premium real estate marketplace connecting buyers with verified sellers.',
     type: 'website',
     images: [
@@ -16,13 +16,13 @@ export const metadata: Metadata = {
         url: '/images/image.png',
         width: 1200,
         height: 630,
-        alt: 'VConnect Properties',
+          alt: 'Vconect',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'VConnect Properties',
+    title: 'Vconect',
     description: 'Premium real estate marketplace.',
     images: ['/images/image.png'],
   },
