@@ -45,6 +45,14 @@ export default function PropertyDetailsPage() {
     message: '',
     inquiryType: 'information' as const,
   });
+  const [viewingForm, setViewingForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    preferredDate: '',
+    preferredTime: '',
+    notes: '',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
 
@@ -79,6 +87,28 @@ export default function PropertyDetailsPage() {
     loadData();
   }, [id, user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const fullName = user.fullName || '';
+    const email = user.email || '';
+    const phone = user.phone || '';
+
+    setInquiryForm((prev) => ({
+      ...prev,
+      fullName: prev.fullName || fullName,
+      email: prev.email || email,
+      phone: prev.phone || phone,
+    }));
+
+    setViewingForm((prev) => ({
+      ...prev,
+      fullName: prev.fullName || fullName,
+      email: prev.email || email,
+      phone: prev.phone || phone,
+    }));
+  }, [user]);
+
   const formatPrice = (price: number, type: string) => {
     const formatted = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 }).format(price);
     return type === 'rent' ? `${formatted}/mo` : formatted;
@@ -102,7 +132,11 @@ export default function PropertyDetailsPage() {
   };
 
   const submitInquiry = async () => {
-    if (!property || !user) return;
+    if (!property) return;
+    if (!user) {
+      toast.error('Please sign in to send an inquiry');
+      return;
+    }
     setSubmitting(true);
     try {
       const response: any = await api.post('/inquiries', {
@@ -115,6 +149,46 @@ export default function PropertyDetailsPage() {
       }
     } catch (error) {
       toast.error('Failed to send inquiry');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitViewingRequest = async () => {
+    if (!property) return;
+    if (!user) {
+      toast.error('Please sign in to request a viewing');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const viewingMessage = [
+        viewingForm.notes?.trim(),
+        viewingForm.preferredDate || viewingForm.preferredTime
+          ? `Preferred viewing: ${viewingForm.preferredDate || 'Any date'} ${viewingForm.preferredTime || 'Any time'}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+
+      const response: any = await api.post('/inquiries', {
+        propertyId: property._id,
+        fullName: viewingForm.fullName,
+        email: viewingForm.email,
+        phone: viewingForm.phone,
+        preferredContact: 'phone',
+        preferredContactTime: viewingForm.preferredTime,
+        message: viewingMessage,
+        inquiryType: 'viewing',
+      });
+
+      if (response.success) {
+        toast.success('Viewing request sent successfully!');
+        setShowContact(true);
+      }
+    } catch (error) {
+      toast.error('Failed to send viewing request');
     } finally {
       setSubmitting(false);
     }
@@ -233,10 +307,13 @@ export default function PropertyDetailsPage() {
                   <DialogContent className="max-w-md">
                     <DialogHeader><DialogTitle>Schedule a Viewing</DialogTitle></DialogHeader>
                     <div className="space-y-4 mt-4">
-                      <div><Label>Preferred Date</Label><Input type="date" /></div>
-                      <div><Label>Preferred Time</Label><Input type="time" /></div>
-                      <div><Label>Notes</Label><Textarea placeholder="Any special requests..." /></div>
-                      <Button className="w-full bg-[#D32F2F] hover:bg-[#B71C1C] text-white">Request Viewing</Button>
+                      <div><Label>Full Name</Label><Input value={viewingForm.fullName} onChange={(e) => setViewingForm({ ...viewingForm, fullName: e.target.value })} /></div>
+                      <div><Label>Email</Label><Input type="email" value={viewingForm.email} onChange={(e) => setViewingForm({ ...viewingForm, email: e.target.value })} /></div>
+                      <div><Label>Phone</Label><Input value={viewingForm.phone} onChange={(e) => setViewingForm({ ...viewingForm, phone: e.target.value })} /></div>
+                      <div><Label>Preferred Date</Label><Input type="date" value={viewingForm.preferredDate} onChange={(e) => setViewingForm({ ...viewingForm, preferredDate: e.target.value })} /></div>
+                      <div><Label>Preferred Time</Label><Input type="time" value={viewingForm.preferredTime} onChange={(e) => setViewingForm({ ...viewingForm, preferredTime: e.target.value })} /></div>
+                      <div><Label>Notes</Label><Textarea value={viewingForm.notes} onChange={(e) => setViewingForm({ ...viewingForm, notes: e.target.value })} placeholder="Any special requests..." /></div>
+                      <Button onClick={submitViewingRequest} disabled={submitting} className="w-full bg-[#D32F2F] hover:bg-[#B71C1C] text-white">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Request Viewing'}</Button>
                     </div>
                   </DialogContent>
                 </Dialog>
