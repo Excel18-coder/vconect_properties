@@ -1,6 +1,8 @@
 import mongoose, { Document } from 'mongoose';
 export type UserRole = 'admin' | 'seller' | 'buyer';
 export type VerificationStatus = 'pending' | 'verified' | 'rejected' | 'suspended';
+export type SubscriptionRole = 'seller' | 'buyer';
+export type SubscriptionStatus = 'inactive' | 'pending' | 'active' | 'past_due' | 'cancelled';
 export interface IUser extends Document {
     _id: mongoose.Types.ObjectId;
     fullName: string;
@@ -12,6 +14,12 @@ export interface IUser extends Document {
     agencyName?: string;
     businessDetails?: string;
     verificationStatus: VerificationStatus;
+    subscriptionRole?: SubscriptionRole;
+    subscriptionPlan?: string;
+    subscriptionStatus?: SubscriptionStatus;
+    subscriptionProvider?: string;
+    subscriptionReference?: string;
+    subscriptionExpiresAt?: Date;
     country?: string;
     county?: string;
     city?: string;

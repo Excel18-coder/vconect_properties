@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Menu, X, Home, Search, Heart, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Home, Search, Heart, User, LogOut, LayoutDashboard, CreditCard } from 'lucide-react';
 
 export function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -111,6 +111,11 @@ export function Navbar() {
                         <User className="h-4 w-4" /> Profile
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/payments" className="flex items-center gap-2 cursor-pointer">
+                        <CreditCard className="h-4 w-4" /> Payments
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer">
                       <LogOut className="h-4 w-4 mr-2" /> Sign Out
@@ -148,6 +153,9 @@ export function Navbar() {
               <>
                 <Link href={dashboardLink} className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-[#D32F2F] hover:bg-red-50 rounded-lg" onClick={() => setMobileOpen(false)}>
                   <LayoutDashboard className="h-5 w-5" /> Dashboard
+                </Link>
+                <Link href="/payments" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-[#D32F2F] hover:bg-red-50 rounded-lg" onClick={() => setMobileOpen(false)}>
+                  <CreditCard className="h-5 w-5" /> Payments
                 </Link>
                 <button onClick={() => { signOut(); setMobileOpen(false); }} className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg w-full">
                   <LogOut className="h-5 w-5" /> Sign Out

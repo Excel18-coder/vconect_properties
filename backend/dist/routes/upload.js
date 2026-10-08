@@ -24,7 +24,7 @@ router.post('/', auth_1.protect, upload.single('image'), async (req, res) => {
         // Convert buffer to base64 data URI for Cloudinary upload
         const fileStr = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
         const result = await cloudinary_1.default.uploader.upload(fileStr, {
-            folder: 'vconect_properties',
+            folder: 'vconect',
             transformation: [{ width: 1200, height: 900, crop: 'limit', quality: 'auto:good' }],
         });
         res.json({

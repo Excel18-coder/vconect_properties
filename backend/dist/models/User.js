@@ -78,6 +78,27 @@ const userSchema = new mongoose_1.Schema({
         enum: ['pending', 'verified', 'rejected', 'suspended'],
         default: 'pending',
     },
+    subscriptionRole: {
+        type: String,
+        enum: ['seller', 'buyer'],
+    },
+    subscriptionPlan: {
+        type: String,
+    },
+    subscriptionStatus: {
+        type: String,
+        enum: ['inactive', 'pending', 'active', 'past_due', 'cancelled'],
+        default: 'inactive',
+    },
+    subscriptionProvider: {
+        type: String,
+    },
+    subscriptionReference: {
+        type: String,
+    },
+    subscriptionExpiresAt: {
+        type: Date,
+    },
     country: {
         type: String,
     },

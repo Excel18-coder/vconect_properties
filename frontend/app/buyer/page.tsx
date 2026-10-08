@@ -17,7 +17,7 @@ export default function BuyerDashboard() {
     const [favorites, setFavorites] = useState<any[]>([]);
     const [inquiries, setInquiries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const openInquiries = inquiries.filter((inquiry: any) => inquiry.status !== 'resolved').length;
+    const openInquiries = inquiries.filter((inquiry: any) => inquiry.status !== 'closed' && inquiry.status !== 'not_interested').length;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -71,6 +71,11 @@ export default function BuyerDashboard() {
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-[#1A1A1A]">Welcome back, {user.fullName}</h1>
                     <p className="text-gray-600">Manage your saved properties and inquiries</p>
+                    <div className="mt-4">
+                        <Link href="/payments" className="inline-flex items-center justify-center h-11 px-4 rounded-lg bg-[#D32F2F] text-white font-medium hover:bg-[#B71C1C] transition-colors">
+                            Upgrade Buyer Plan
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -157,7 +162,7 @@ export default function BuyerDashboard() {
                                                         </h3>
                                                         <p className="text-gray-500 text-sm">Submitted on {inquiry.createdAt ? new Date(inquiry.createdAt).toLocaleDateString() : 'Recently'}</p>
                                                     </div>
-                                                    <Badge variant={inquiry.status === 'resolved' ? 'outline' : 'secondary'} className={inquiry.status === 'resolved' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
+                                                    <Badge variant={inquiry.status === 'closed' ? 'outline' : 'secondary'} className={inquiry.status === 'closed' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
                                                         {inquiry.status ? inquiry.status.charAt(0).toUpperCase() + inquiry.status.slice(1) : 'New'}
                                                     </Badge>
                                                 </div>

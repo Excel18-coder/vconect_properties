@@ -91,6 +91,11 @@ export default function SellerDashboard() {
                             <Plus className="mr-2 h-4 w-4" /> List New Property
                         </Button>
                     </Link>
+                    <Link href="/payments">
+                        <Button variant="outline" className="border-[#D32F2F] text-[#D32F2F] hover:bg-[#D32F2F]/10">
+                            Manage Subscription
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Stats Grid */}

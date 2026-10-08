@@ -54,6 +54,16 @@ CLOUDINARY_API_KEY=128227525181798
 CLOUDINARY_API_SECRET=-DWiP0SUDyJiPwCjO4UFqta44B0
 
 FRONTEND_URL=https://vconect-properties.vercel.app
+
+PAYHERO_BASE_URL=https://payherokenya.com
+PAYHERO_AUTH_TOKEN=your_payhero_api_token_or_basic_token
+PAYHERO_API_USERNAME=your_payhero_username
+PAYHERO_API_PASSWORD=your_payhero_password
+PAYHERO_INITIATE_URL=https://payherokenya.com/api/payments/initiate
+PAYHERO_STATUS_URL=https://payherokenya.com/api/payments/status
+PAYHERO_CALLBACK_URL=https://your-render-url.onrender.com/api/payments/webhook/payhero
+PAYHERO_SUCCESS_URL=https://vconect-properties.vercel.app/payments
+PAYHERO_FAILURE_URL=https://vconect-properties.vercel.app/payments
 ```
 
 ### Step 4: Deploy Backend
@@ -219,6 +229,15 @@ curl -X POST "https://your-render-url.onrender.com/api/auth/login" \
 | CLOUDINARY_API_KEY | Your Cloudinary API key | Yes |
 | CLOUDINARY_API_SECRET | Your Cloudinary API secret | Yes |
 | FRONTEND_URL | Your Vercel frontend URL | Yes |
+| PAYHERO_BASE_URL | PayHero base URL | Yes |
+| PAYHERO_AUTH_TOKEN | PayHero API token or bearer token | Yes |
+| PAYHERO_API_USERNAME | PayHero username if using basic auth | No |
+| PAYHERO_API_PASSWORD | PayHero password if using basic auth | No |
+| PAYHERO_INITIATE_URL | PayHero checkout initiation URL | Yes |
+| PAYHERO_STATUS_URL | PayHero payment status URL | Yes |
+| PAYHERO_CALLBACK_URL | Your backend webhook URL for payment callbacks | Yes |
+| PAYHERO_SUCCESS_URL | Redirect URL after successful payment | Yes |
+| PAYHERO_FAILURE_URL | Redirect URL after failed payment | Yes |
 
 ### Frontend (.env.local or Vercel settings)
 | Variable | Value | Required |

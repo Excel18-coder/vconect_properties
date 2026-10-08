@@ -15,6 +15,7 @@ const inquiries_1 = __importDefault(require("./routes/inquiries"));
 const favorites_1 = __importDefault(require("./routes/favorites"));
 const profile_1 = __importDefault(require("./routes/profile"));
 const admin_1 = __importDefault(require("./routes/admin"));
+const payments_1 = __importDefault(require("./routes/payments"));
 const app = (0, express_1.default)();
 // Connect MongoDB
 (0, db_1.default)();
@@ -22,6 +23,10 @@ const app = (0, express_1.default)();
 // CORS CONFIGURATION
 // ===============================
 const allowedOrigins = [
+    'https://www.vconect.co.ke',
+    'https://vconect.co.ke',
+    'http://www.vconect.co.ke',
+    'http://vconect.co.ke',
     'https://vconect-properties.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001',
@@ -86,6 +91,7 @@ app.use('/api/inquiries', inquiries_1.default);
 app.use('/api/favorites', favorites_1.default);
 app.use('/api/profile', profile_1.default);
 app.use('/api/admin', admin_1.default);
+app.use('/api/payments', payments_1.default);
 // ===============================
 // 404
 // ===============================
@@ -110,7 +116,7 @@ app.use((err, _req, res, _next) => {
 // ===============================
 const PORT = Number(process.env.PORT) || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 VConnect API running on port ${PORT}`);
+    console.log(`🚀 vconect API running on port ${PORT}`);
 });
 exports.default = app;
 //# sourceMappingURL=server.js.map

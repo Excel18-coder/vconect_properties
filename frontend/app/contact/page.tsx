@@ -15,11 +15,11 @@ export default function ContactPage() {
             <div className="space-y-4">
               <div>
                 <h2 className="text-2xl font-semibold">Customer Support</h2>
-                <p className="text-gray-600">support@vconnect.co.ke</p>
+                <p className="text-gray-600">vconectproperties@gmail.com</p>
               </div>
               <div>
                 <h2 className="text-2xl font-semibold">Phone</h2>
-                <p className="text-gray-600">+254 700 000 000</p>
+                <p className="text-gray-600">+254 117487554</p>
               </div>
               <div>
                 <h2 className="text-2xl font-semibold">Office</h2>

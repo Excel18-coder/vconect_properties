@@ -11,6 +11,7 @@ import inquiryRoutes from './routes/inquiries';
 import favoriteRoutes from './routes/favorites';
 import profileRoutes from './routes/profile';
 import adminRoutes from './routes/admin';
+import paymentRoutes from './routes/payments';
 
 const app = express();
 
@@ -125,6 +126,8 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/profile', profileRoutes);
 
 app.use('/api/admin', adminRoutes);
+
+app.use('/api/payments', paymentRoutes);
 
 
 // ===============================

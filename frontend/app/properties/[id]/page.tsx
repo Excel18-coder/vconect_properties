@@ -36,6 +36,8 @@ export default function PropertyDetailsPage() {
   const [currentImage, setCurrentImage] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [inquiryPaid, setInquiryPaid] = useState(false);
+  const [inquiryPaymentId, setInquiryPaymentId] = useState<string | null>(null);
   const [inquiryForm, setInquiryForm] = useState({
     fullName: '',
     email: '',
@@ -77,6 +79,13 @@ export default function PropertyDetailsPage() {
         }
         if (favRes && favRes.isFavorited !== undefined) {
           setIsFavorited(favRes.isFavorited);
+        }
+
+        if (user) {
+          const inquiryAccessRes: any = await api.get(`/payments/entitlements/inquiry/${id}`);
+          setInquiryPaid(Boolean(inquiryAccessRes?.data?.eligible));
+        } else {
+          setInquiryPaid(false);
         }
       } catch (error) {
         console.error('Failed to load property details:', error);
@@ -131,10 +140,99 @@ export default function PropertyDetailsPage() {
     }
   };
 
+  useEffect(() => {
+    if (!inquiryPaymentId) return;
+
+    let cancelled = false;
+    const interval = window.setInterval(async () => {
+      try {
+        const response: any = await api.get(`/payments/status/${inquiryPaymentId}`);
+        const payment = response?.data?.payment;
+
+        if (!payment || cancelled) return;
+
+        if (payment.status === 'paid') {
+          setInquiryPaid(true);
+          setInquiryPaymentId(null);
+          window.clearInterval(interval);
+          toast.success('PayHero payment confirmed. You can now send the inquiry.');
+        }
+
+        if (payment.status === 'failed' || payment.status === 'cancelled') {
+          setInquiryPaymentId(null);
+          window.clearInterval(interval);
+          toast.error('Payment did not complete');
+        }
+      } catch (error) {
+        // keep polling until timeout or success
+      }
+    }, 5000);
+
+    const timeout = window.setTimeout(() => {
+      if (!cancelled) {
+        toast.message('Still waiting for PayHero confirmation. You can retry if needed.');
+      }
+      setInquiryPaymentId(null);
+      window.clearInterval(interval);
+    }, 120000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+    };
+  }, [inquiryPaymentId]);
+
+  const startInquiryPayment = async () => {
+    if (!property) return;
+    if (!user) {
+      toast.error('Please sign in to continue');
+      return;
+    }
+
+    const phone = inquiryForm.phone || user.phone || '';
+    if (!phone.trim()) {
+      toast.error('Add a phone number so PayHero can send the STK push');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response: any = await api.post('/payments/initiate', {
+        role: 'buyer',
+        purpose: 'inquiry_fee',
+        propertyId: property._id,
+        phone,
+        billingCycle: 'monthly',
+      });
+
+      const paymentId = response?.data?.paymentId;
+      const checkoutUrl = response?.data?.checkoutUrl;
+
+      if (paymentId) {
+        setInquiryPaymentId(paymentId);
+      }
+
+      if (checkoutUrl) {
+        window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+      }
+
+      toast.message('Complete the KES 350 PayHero payment to unlock the inquiry form.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to start the PayHero payment');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const submitInquiry = async () => {
     if (!property) return;
     if (!user) {
       toast.error('Please sign in to send an inquiry');
+      return;
+    }
+    if (!inquiryPaid) {
+      toast.error('Please complete the KES 350 payment first');
       return;
     }
     setSubmitting(true);
@@ -292,11 +390,21 @@ export default function PropertyDetailsPage() {
                   <DialogContent className="max-w-md">
                     <DialogHeader><DialogTitle>Request Information</DialogTitle></DialogHeader>
                     <div className="space-y-4 mt-4">
+                      {!inquiryPaid && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 space-y-2">
+                          <p className="font-medium">KES 350 PayHero payment required</p>
+                          <p>Pay once to unlock the property inquiry form and send your request to the seller.</p>
+                          <Button onClick={startInquiryPayment} disabled={submitting} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Pay KES 350 with PayHero'}
+                          </Button>
+                        </div>
+                      )}
                       <div><Label>Full Name</Label><Input value={inquiryForm.fullName} onChange={(e) => setInquiryForm({ ...inquiryForm, fullName: e.target.value })} /></div>
                       <div><Label>Email</Label><Input type="email" value={inquiryForm.email} onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })} /></div>
                       <div><Label>Phone</Label><Input value={inquiryForm.phone} onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })} /></div>
                       <div><Label>Message</Label><Textarea value={inquiryForm.message} onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })} placeholder="I am interested in this property..." /></div>
-                      <Button onClick={submitInquiry} disabled={submitting} className="w-full bg-[#D32F2F] hover:bg-[#B71C1C] text-white">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Inquiry'}</Button>
+                      <Button onClick={submitInquiry} disabled={submitting || !inquiryPaid} className="w-full bg-[#D32F2F] hover:bg-[#B71C1C] text-white">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : inquiryPaid ? 'Send Inquiry' : 'Pay to Continue'}</Button>
+                      {!inquiryPaid && <p className="text-xs text-gray-500 text-center">The inquiry form will unlock immediately after PayHero confirms payment.</p>}
                     </div>
                   </DialogContent>
                 </Dialog>

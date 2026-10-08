@@ -60,6 +60,15 @@ The frontend is trying to fetch from the wrong URLs. This is a **Vercel environm
 - `JWT_SECRET` = Your JWT secret
 - All other variables as configured
 
+**PayHero (Set in Render Backend):**
+- `PAYHERO_BASE_URL`
+- `PAYHERO_AUTH_TOKEN` or `PAYHERO_API_USERNAME` + `PAYHERO_API_PASSWORD`
+- `PAYHERO_INITIATE_URL`
+- `PAYHERO_STATUS_URL`
+- `PAYHERO_CALLBACK_URL`
+- `PAYHERO_SUCCESS_URL`
+- `PAYHERO_FAILURE_URL`
+
 ---
 
 **The key is: ALWAYS set environment variables in the platform's dashboard, not in .env files in production!**

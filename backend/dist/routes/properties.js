@@ -71,23 +71,6 @@ router.get('/', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
-// GET /api/properties/:id — public
-router.get('/:id', async (req, res) => {
-    try {
-        const property = await Property_1.default.findById(req.params.id)
-            .populate('sellerId', 'fullName email phone agencyName verificationStatus avatarUrl');
-        if (!property) {
-            res.status(404).json({ success: false, message: 'Property not found' });
-            return;
-        }
-        // Increment view count asynchronously
-        Property_1.default.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }).exec();
-        res.json({ success: true, data: property });
-    }
-    catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
 // POST /api/properties — seller only
 router.post('/', auth_1.protect, roles_1.requireSeller, async (req, res) => {
     try {
@@ -108,7 +91,7 @@ router.post('/', auth_1.protect, roles_1.requireSeller, async (req, res) => {
             fullAddress: zod_1.z.string().optional(),
             amenities: zod_1.z.array(zod_1.z.string()).default([]),
             features: zod_1.z.array(zod_1.z.string()).default([]),
-            images: zod_1.z.array(zod_1.z.object({ url: zod_1.z.string(), publicId: zod_1.z.string(), isPrimary: zod_1.z.boolean().default(false), sortOrder: zod_1.z.number().default(0) })).default([]),
+            images: zod_1.z.array(zod_1.z.object({ url: zod_1.z.string(), publicId: zod_1.z.string(), isPrimary: zod_1.z.boolean().default(false), sortOrder: zod_1.z.number().default(0) })).max(20, 'You can upload up to 20 images per property').default([]),
             virtualTourLink: zod_1.z.string().url().optional().or(zod_1.z.literal('')),
         });
         const data = schema.parse(req.body);
@@ -120,6 +103,66 @@ router.post('/', auth_1.protect, roles_1.requireSeller, async (req, res) => {
             res.status(400).json({ success: false, message: 'Validation error', errors: error.errors });
             return;
         }
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+// GET /api/properties/seller/mine — seller's own properties
+router.get('/seller/mine', auth_1.protect, roles_1.requireSeller, async (req, res) => {
+    try {
+        const properties = await Property_1.default.find({ sellerId: req.user._id })
+            .sort({ createdAt: -1 })
+            .lean();
+        res.json({ success: true, data: properties });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+// GET /api/properties/seller/stats — seller's dashboard stats
+router.get('/seller/stats', auth_1.protect, roles_1.requireSeller, async (req, res) => {
+    try {
+        const [totalListings, activeListings, pendingListings, totalViews, totalFavorites,] = await Promise.all([
+            Property_1.default.countDocuments({ sellerId: req.user._id }),
+            Property_1.default.countDocuments({ sellerId: req.user._id, status: 'active' }),
+            Property_1.default.countDocuments({ sellerId: req.user._id, status: 'pending_approval' }),
+            Property_1.default.aggregate([
+                { $match: { sellerId: req.user._id } },
+                { $group: { _id: null, total: { $sum: '$viewsCount' } } },
+            ]),
+            Property_1.default.aggregate([
+                { $match: { sellerId: req.user._id } },
+                { $group: { _id: null, total: { $sum: '$favoritesCount' } } },
+            ]),
+        ]);
+        res.json({
+            success: true,
+            data: {
+                totalListings,
+                activeListings,
+                pendingListings,
+                totalViews: totalViews[0]?.total || 0,
+                totalFavorites: totalFavorites[0]?.total || 0,
+            },
+        });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+// GET /api/properties/:id — public
+router.get('/:id', async (req, res) => {
+    try {
+        const property = await Property_1.default.findById(req.params.id)
+            .populate('sellerId', 'fullName email phone agencyName verificationStatus avatarUrl');
+        if (!property) {
+            res.status(404).json({ success: false, message: 'Property not found' });
+            return;
+        }
+        // Increment view count asynchronously
+        Property_1.default.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }).exec();
+        res.json({ success: true, data: property });
+    }
+    catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -164,49 +207,6 @@ router.delete('/:id', auth_1.protect, async (req, res) => {
         }
         await property.deleteOne();
         res.json({ success: true, message: 'Property deleted' });
-    }
-    catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-// GET /api/properties/seller/mine — seller's own properties
-router.get('/seller/mine', auth_1.protect, roles_1.requireSeller, async (req, res) => {
-    try {
-        const properties = await Property_1.default.find({ sellerId: req.user._id })
-            .sort({ createdAt: -1 })
-            .lean();
-        res.json({ success: true, data: properties });
-    }
-    catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-// GET /api/properties/seller/stats — seller's dashboard stats
-router.get('/seller/stats', auth_1.protect, roles_1.requireSeller, async (req, res) => {
-    try {
-        const [totalListings, activeListings, pendingListings, totalViews, totalFavorites,] = await Promise.all([
-            Property_1.default.countDocuments({ sellerId: req.user._id }),
-            Property_1.default.countDocuments({ sellerId: req.user._id, status: 'active' }),
-            Property_1.default.countDocuments({ sellerId: req.user._id, status: 'pending_approval' }),
-            Property_1.default.aggregate([
-                { $match: { sellerId: req.user._id } },
-                { $group: { _id: null, total: { $sum: '$viewsCount' } } },
-            ]),
-            Property_1.default.aggregate([
-                { $match: { sellerId: req.user._id } },
-                { $group: { _id: null, total: { $sum: '$favoritesCount' } } },
-            ]),
-        ]);
-        res.json({
-            success: true,
-            data: {
-                totalListings,
-                activeListings,
-                pendingListings,
-                totalViews: totalViews[0]?.total || 0,
-                totalFavorites: totalFavorites[0]?.total || 0,
-            },
-        });
     }
     catch (error) {
         res.status(500).json({ success: false, message: 'Server error' });

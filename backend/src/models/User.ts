@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 
 export type UserRole = 'admin' | 'seller' | 'buyer';
 export type VerificationStatus = 'pending' | 'verified' | 'rejected' | 'suspended';
+export type SubscriptionRole = 'seller' | 'buyer';
+export type SubscriptionStatus = 'inactive' | 'pending' | 'active' | 'past_due' | 'cancelled';
 
 export interface IUser extends Document {
     _id: mongoose.Types.ObjectId;
@@ -15,6 +17,12 @@ export interface IUser extends Document {
     agencyName?: string;
     businessDetails?: string;
     verificationStatus: VerificationStatus;
+    subscriptionRole?: SubscriptionRole;
+    subscriptionPlan?: string;
+    subscriptionStatus?: SubscriptionStatus;
+    subscriptionProvider?: string;
+    subscriptionReference?: string;
+    subscriptionExpiresAt?: Date;
     country?: string;
     county?: string;
     city?: string;
@@ -64,6 +72,27 @@ const userSchema = new Schema<IUser>(
             type: String,
             enum: ['pending', 'verified', 'rejected', 'suspended'],
             default: 'pending',
+        },
+        subscriptionRole: {
+            type: String,
+            enum: ['seller', 'buyer'],
+        },
+        subscriptionPlan: {
+            type: String,
+        },
+        subscriptionStatus: {
+            type: String,
+            enum: ['inactive', 'pending', 'active', 'past_due', 'cancelled'],
+            default: 'inactive',
+        },
+        subscriptionProvider: {
+            type: String,
+        },
+        subscriptionReference: {
+            type: String,
+        },
+        subscriptionExpiresAt: {
+            type: Date,
         },
         country: {
             type: String,
