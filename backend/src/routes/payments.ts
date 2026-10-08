@@ -1,10 +1,12 @@
-import { Router, Response } from 'express';
+import { Router, Response as ExpressResponse } from 'express';
 import { z } from 'zod';
 import Payment from '../models/Payment';
 import User from '../models/User';
 import { protect, AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+type FetchResponse = globalThis.Response;
 
 type PayHeroGatewayResponse = {
     checkoutUrl?: string;
@@ -239,11 +241,16 @@ async function initiatePayHeroCheckout(payload: Record<string, any>) {
 
     const headers = buildPayHeroHeaders();
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-    });
+    let response: FetchResponse;
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload),
+        });
+    } catch (error: any) {
+        throw new Error(`PayHero gateway request failed: ${error?.message || 'network error'}`);
+    }
 
     const text = await response.text();
     let data: PayHeroGatewayResponse = {};
@@ -254,10 +261,29 @@ async function initiatePayHeroCheckout(payload: Record<string, any>) {
     }
 
     if (!response.ok) {
-        throw new Error(data?.message || data?.error || 'PayHero checkout initiation failed');
+        const rawBody = (text || '').trim();
+        const gatewayMessage = extractGatewayErrorMessage(data);
+        const htmlHint = /<!doctype html|<html|<body/i.test(rawBody) ? ' The PayHero endpoint is returning HTML instead of JSON. Check PAYHERO_INITIATE_URL, PAYHERO_AUTH_TOKEN, and the gateway credentials.' : '';
+        const errorMessage = gatewayMessage || rawBody || `PayHero checkout initiation failed (${response.status})`;
+        throw new Error(`${errorMessage}${htmlHint}`);
     }
 
     return normalizeGatewayResponse(data);
+}
+
+function extractGatewayErrorMessage(response: PayHeroGatewayResponse | any) {
+    if (!response || typeof response !== 'object') {
+        return '';
+    }
+
+    const payload = extractGatewayPayload(response as PayHeroGatewayResponse);
+    const message = readGatewayValue(payload, ['message', 'error', 'errorMessage', 'detail', 'details']);
+    if (typeof message === 'string' && message.trim()) {
+        return message.trim();
+    }
+
+    const raw = typeof response?.raw === 'string' ? response.raw : typeof payload?.raw === 'string' ? payload.raw : '';
+    return raw.trim();
 }
 
 async function findPaymentForWebhook(reference: string) {
@@ -274,7 +300,7 @@ async function findPaymentForWebhook(reference: string) {
     });
 }
 
-router.get('/plans', protect, async (req: AuthRequest, res: Response) => {
+router.get('/plans', protect, async (req: AuthRequest, res: ExpressResponse) => {
     const role = req.query.role === 'buyer' ? 'buyer' : 'seller';
     res.json({
         success: true,
@@ -286,12 +312,12 @@ router.get('/plans', protect, async (req: AuthRequest, res: Response) => {
     });
 });
 
-router.get('/me', protect, async (req: AuthRequest, res: Response) => {
+router.get('/me', protect, async (req: AuthRequest, res: ExpressResponse) => {
     const payments = await Payment.find({ userId: req.user!._id }).sort({ createdAt: -1 }).limit(20).lean();
     res.json({ success: true, data: payments });
 });
 
-router.get('/entitlements/inquiry/:propertyId', protect, async (req: AuthRequest, res: Response) => {
+router.get('/entitlements/inquiry/:propertyId', protect, async (req: AuthRequest, res: ExpressResponse) => {
     const payment = await Payment.findOne({
         userId: req.user!._id,
         purpose: 'inquiry_fee',
@@ -310,7 +336,7 @@ router.get('/entitlements/inquiry/:propertyId', protect, async (req: AuthRequest
     });
 });
 
-router.get('/status/:paymentId', protect, async (req: AuthRequest, res: Response) => {
+router.get('/status/:paymentId', protect, async (req: AuthRequest, res: ExpressResponse) => {
     try {
         const payment = await Payment.findById(req.params.paymentId);
         if (!payment) {
@@ -350,7 +376,7 @@ router.get('/status/:paymentId', protect, async (req: AuthRequest, res: Response
     }
 });
 
-router.post('/initiate', protect, async (req: AuthRequest, res: Response) => {
+router.post('/initiate', protect, async (req: AuthRequest, res: ExpressResponse) => {
     try {
         const schema = z.object({
             role: z.enum(['seller', 'buyer']),
@@ -513,7 +539,7 @@ router.post('/initiate', protect, async (req: AuthRequest, res: Response) => {
     }
 });
 
-router.post('/webhook/payhero', async (req, res: Response) => {
+router.post('/webhook/payhero', async (req, res: ExpressResponse) => {
     try {
         const payload = req.body || {};
         const reference =
