@@ -9,15 +9,34 @@ const router = Router();
 type FetchResponse = globalThis.Response;
 
 type PayHeroGatewayResponse = {
+    success?: boolean;
+    status?: string;
+    reference?: string;
+    external_reference?: string;
+    ExternalReference?: string;
+    CheckoutRequestID?: string;
+    checkout_request_id?: string;
+    payment_reference?: string;
+    paymentReference?: string;
+    payment_reference_id?: string;
+    provider_reference?: string;
+    providerReference?: string;
     checkoutUrl?: string;
     paymentUrl?: string;
     url?: string;
-    reference?: string;
     transactionReference?: string;
     id?: string;
-    status?: string;
     message?: string;
     error?: string;
+    [key: string]: any;
+};
+
+type PayHeroPaymentChannel = {
+    id?: number | string;
+    account_id?: number | string;
+    is_active?: boolean;
+    channel_type?: string;
+    transaction_type?: string;
     [key: string]: any;
 };
 
@@ -83,6 +102,15 @@ function readGatewayValue(payload: Record<string, any>, keys: string[]) {
     return undefined;
 }
 
+function parseNumericId(value: unknown) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function getConfiguredPayHeroChannelId() {
+    return parseNumericId(process.env.PAYHERO_CHANNEL_ID || process.env.PAYHERO_ACCOUNT_ID);
+}
+
 function extractGatewayPayload(response: PayHeroGatewayResponse) {
     if (!response || typeof response !== 'object') {
         return {} as PayHeroGatewayResponse;
@@ -101,6 +129,8 @@ function extractGatewayReference(response: PayHeroGatewayResponse) {
     const payload = extractGatewayPayload(response);
     return readGatewayValue(payload, [
         'reference',
+        'ExternalReference',
+        'external_reference',
         'payment_reference',
         'paymentReference',
         'merchantReference',
@@ -109,6 +139,8 @@ function extractGatewayReference(response: PayHeroGatewayResponse) {
         'account_reference',
         'transactionReference',
         'transaction_reference',
+        'CheckoutRequestID',
+        'checkout_request_id',
         'id',
         'checkoutId',
     ]);
@@ -145,7 +177,7 @@ function buildPayHeroHeaders() {
 }
 
 function getPayHeroBaseUrl() {
-    return (process.env.PAYHERO_BASE_URL || 'https://payherokenya.com').replace(/\/+$/, '');
+    return (process.env.PAYHERO_BASE_URL || 'https://backend.payhero.co.ke').replace(/\/+$/, '');
 }
 
 function resolvePayHeroUrl(preferredUrl?: string, fallbackPath?: string) {
@@ -156,6 +188,72 @@ function resolvePayHeroUrl(preferredUrl?: string, fallbackPath?: string) {
 
 function normalizeGatewayResponse(response: PayHeroGatewayResponse): PayHeroGatewayResponse {
     return response || {};
+}
+
+async function fetchPayHeroPaymentChannels() {
+    const channelsUrl = resolvePayHeroUrl(process.env.PAYHERO_PAYMENT_CHANNELS_URL, '/api/v2/payment_channels');
+    if (!channelsUrl) return [] as PayHeroPaymentChannel[];
+
+    const url = new URL(channelsUrl);
+    url.searchParams.set('is_active', 'true');
+
+    const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: buildPayHeroHeaders(),
+    });
+
+    const text = await response.text();
+    let data: PayHeroGatewayResponse = {};
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch {
+        data = { raw: text };
+    }
+
+    if (!response.ok) {
+        const rawBody = (text || '').trim();
+        const gatewayMessage = extractGatewayErrorMessage(data);
+        throw new Error(gatewayMessage || rawBody || `PayHero payment channels lookup failed (${response.status})`);
+    }
+
+    const payload = extractGatewayPayload(data);
+    const channels = payload.payment_channels || payload.channels || payload.data || [];
+    return Array.isArray(channels) ? channels as PayHeroPaymentChannel[] : [];
+}
+
+async function resolvePayHeroChannelId() {
+    const configuredChannelId = getConfiguredPayHeroChannelId();
+    const channels = await fetchPayHeroPaymentChannels();
+
+    if (configuredChannelId) {
+        const match = channels.find((channel) => Number(channel.id) === configuredChannelId);
+        if (match) {
+            return configuredChannelId;
+        }
+
+        const accountMatch = channels.find((channel) => Number(channel.account_id) === configuredChannelId);
+        if (accountMatch && Number(accountMatch.id)) {
+            return Number(accountMatch.id);
+        }
+
+        throw new Error(
+            `Configured PAYHERO_CHANNEL_ID ${configuredChannelId} does not match any active PayHero payment channel. Register a channel in PayHero and set PAYHERO_CHANNEL_ID to the channel id from /api/v2/payment_channels.`
+        );
+    }
+
+    if (channels.length === 1 && Number(channels[0].id)) {
+        return Number(channels[0].id);
+    }
+
+    if (!channels.length) {
+        throw new Error(
+            'No active PayHero payment channels are registered for this account. Register a payment channel in PayHero, then set PAYHERO_CHANNEL_ID to that channel id.'
+        );
+    }
+
+    throw new Error(
+        'Multiple PayHero payment channels are registered but PAYHERO_CHANNEL_ID is not set. Set PAYHERO_CHANNEL_ID to the correct channel id from /api/v2/payment_channels.'
+    );
 }
 
 async function syncPaymentSubscription(payment: any, gatewayReference?: string) {
@@ -189,7 +287,7 @@ async function syncPaymentSubscription(payment: any, gatewayReference?: string) 
 }
 
 async function fetchPayHeroStatus(reference: string) {
-    const statusUrl = process.env.PAYHERO_STATUS_URL;
+    const statusUrl = resolvePayHeroUrl(process.env.PAYHERO_STATUS_URL, '/api/v2/transaction-status');
     if (!statusUrl) return null;
 
     const url = new URL(statusUrl);
@@ -226,15 +324,15 @@ function normalizeKenyanPhone(phone?: string) {
     if (!phone) return '';
     const digits = phone.replace(/\D/g, '');
 
-    if (digits.startsWith('254') && digits.length >= 12) return `+${digits}`;
-    if (digits.startsWith('0') && digits.length >= 10) return `+254${digits.slice(1)}`;
-    if (digits.length === 9) return `+254${digits}`;
+    if (digits.startsWith('254') && digits.length >= 12) return `0${digits.slice(3)}`;
+    if (digits.startsWith('0') && digits.length >= 10) return digits;
+    if (digits.length === 9) return `0${digits}`;
 
     return phone.trim();
 }
 
 async function initiatePayHeroCheckout(payload: Record<string, any>) {
-    const url = resolvePayHeroUrl(process.env.PAYHERO_INITIATE_URL, process.env.PAYHERO_INITIATE_PATH || '/api/payments/initiate');
+    const url = resolvePayHeroUrl(process.env.PAYHERO_INITIATE_URL, process.env.PAYHERO_INITIATE_PATH || '/api/v2/payments');
     if (!url) {
         throw new Error('PAYHERO_INITIATE_URL is not configured');
     }
@@ -471,37 +569,20 @@ router.post('/initiate', protect, async (req: AuthRequest, res: ExpressResponse)
         const successUrl = resolvePayHeroUrl(process.env.PAYHERO_SUCCESS_URL) || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payments`;
         const failureUrl = resolvePayHeroUrl(process.env.PAYHERO_FAILURE_URL) || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payments`;
 
+        const channelId = await resolvePayHeroChannelId();
+
         const checkoutResponse = await initiatePayHeroCheckout({
             amount,
-            currency: 'KES',
-            email: req.user!.email,
-            name: req.user!.fullName,
-            phone,
-            msisdn: phone,
-            phoneNumber: phone,
-            reference: String(payment._id),
-            accountReference: String(payment._id),
-            merchantReference: String(payment._id),
-            planId: plan.id,
-            planName: plan.name,
-            role: data.role,
-            billingCycle: data.billingCycle,
-            description,
-            paymentMethod: 'stk_push',
-            payment_method: 'stk_push',
-            channel: 'mpesa',
-            channelType: 'stk_push',
-            callbackUrl,
+            phone_number: phone,
+            channel_id: channelId,
+            provider: 'm-pesa',
+            external_reference: String(payment._id),
+            customer_name: req.user!.fullName,
             callback_url: callbackUrl,
-            successUrl,
-            success_url: successUrl,
-            failureUrl,
-            failure_url: failureUrl,
-            metadata,
         });
 
         const checkoutUrl = extractCheckoutUrl(checkoutResponse);
-        const providerReference = extractGatewayReference(checkoutResponse);
+        const providerReference = extractGatewayReference(checkoutResponse) || String(payment._id);
 
         if (!checkoutUrl && !providerReference) {
             payment.status = 'failed';
@@ -545,6 +626,9 @@ router.post('/webhook/payhero', async (req, res: ExpressResponse) => {
         const reference =
             readGatewayValue(payload, [
                 'reference',
+                'Reference',
+                'external_reference',
+                'ExternalReference',
                 'payment_reference',
                 'paymentReference',
                 'merchantReference',
@@ -553,9 +637,14 @@ router.post('/webhook/payhero', async (req, res: ExpressResponse) => {
                 'account_reference',
                 'transactionReference',
                 'transaction_reference',
+                'CheckoutRequestID',
+                'checkout_request_id',
             ]) ||
             readGatewayValue(payload?.data || {}, [
                 'reference',
+                'Reference',
+                'external_reference',
+                'ExternalReference',
                 'payment_reference',
                 'paymentReference',
                 'merchantReference',
@@ -564,10 +653,12 @@ router.post('/webhook/payhero', async (req, res: ExpressResponse) => {
                 'account_reference',
                 'transactionReference',
                 'transaction_reference',
+                'CheckoutRequestID',
+                'checkout_request_id',
             ]);
         const status = normalizeGatewayStatus(
-            readGatewayValue(payload, ['status', 'paymentStatus', 'payment_status', 'state']) ||
-            readGatewayValue(payload?.data || {}, ['status', 'paymentStatus', 'payment_status', 'state'])
+            readGatewayValue(payload, ['status', 'paymentStatus', 'payment_status', 'state', 'ResultDesc', 'resultDesc']) ||
+            readGatewayValue(payload?.data || {}, ['status', 'paymentStatus', 'payment_status', 'state', 'ResultDesc', 'resultDesc'])
         );
 
         if (!reference) {

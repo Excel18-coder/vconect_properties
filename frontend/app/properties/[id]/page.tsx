@@ -217,9 +217,13 @@ export default function PropertyDetailsPage() {
         window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
       }
 
-      toast.message('Complete the KES 350 PayHero payment to unlock the inquiry form.');
+      toast.message('Complete the KES 350 PayHero payment to unlock the inquiry form. A payment prompt will appear on your phone.');
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to start the PayHero payment');
+      const errorMsg = error?.message || 'Failed to start the PayHero payment';
+      const friendlyMsg = errorMsg.includes('payment channel') 
+        ? 'Payment service is not available right now. Please contact support.' 
+        : errorMsg;
+      toast.error(friendlyMsg);
     } finally {
       setSubmitting(false);
     }
