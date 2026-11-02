@@ -16,6 +16,7 @@ const favorites_1 = __importDefault(require("./routes/favorites"));
 const profile_1 = __importDefault(require("./routes/profile"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const payments_1 = __importDefault(require("./routes/payments"));
+const vybz_1 = __importDefault(require("./routes/vybz"));
 const app = (0, express_1.default)();
 // Connect MongoDB
 (0, db_1.default)();
@@ -92,6 +93,7 @@ app.use('/api/favorites', favorites_1.default);
 app.use('/api/profile', profile_1.default);
 app.use('/api/admin', admin_1.default);
 app.use('/api/payments', payments_1.default);
+app.use('/api/vybz', vybz_1.default);
 // ===============================
 // 404
 // ===============================

@@ -12,6 +12,7 @@ import favoriteRoutes from './routes/favorites';
 import profileRoutes from './routes/profile';
 import adminRoutes from './routes/admin';
 import paymentRoutes from './routes/payments';
+import vybzRoutes from './routes/vybz';
 
 const app = express();
 
@@ -128,6 +129,8 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use('/api/payments', paymentRoutes);
+
+app.use('/api/vybz', vybzRoutes);
 
 
 // ===============================

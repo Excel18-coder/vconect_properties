@@ -10,6 +10,8 @@ export type SubscriptionStatus = 'inactive' | 'pending' | 'active' | 'past_due' 
 export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled';
 export type BillingCycle = 'monthly' | 'yearly';
 export type PaymentPurpose = 'subscription' | 'inquiry_fee';
+export type VybzPostType = 'video' | 'image' | 'text';
+export type VybzCategory = 'all' | 'following' | 'explore' | 'videos' | 'memes' | 'pictures' | 'stories' | 'inspiration' | 'art' | 'text';
 
 export interface User {
     _id: string;
@@ -138,4 +140,33 @@ export interface PaymentRecord {
     expiresAt?: string;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface VybzAuthor {
+    _id: string;
+    fullName: string;
+    avatarUrl?: string;
+    verificationStatus: VerificationStatus;
+}
+
+export interface VybzComment {
+    _id: string;
+    userId: string | VybzAuthor;
+    text: string;
+    createdAt: string;
+}
+
+export interface VybzPost {
+    _id: string;
+    authorId: string | VybzAuthor;
+    type: VybzPostType;
+    category: Exclude<VybzCategory, 'all'>;
+    caption: string;
+    mediaUrl?: string;
+    mediaPublicId?: string;
+    hashtags: string[];
+    likes: string[];
+    comments: VybzComment[];
+    viewsCount: number;
+    createdAt: string;
 }

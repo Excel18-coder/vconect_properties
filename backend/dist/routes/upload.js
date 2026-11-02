@@ -8,24 +8,27 @@ const multer_1 = __importDefault(require("multer"));
 const cloudinary_1 = __importDefault(require("../config/cloudinary"));
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
-const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 // POST /api/upload — upload image to Cloudinary, returns { url, publicId }
-router.post('/', auth_1.protect, upload.single('image'), async (req, res) => {
+router.post('/', auth_1.protect, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'media', maxCount: 1 }]), async (req, res) => {
     try {
-        if (!req.file) {
-            res.status(400).json({ success: false, message: 'No image file provided' });
+        const files = req.files;
+        const file = files?.image?.[0] || files?.media?.[0];
+        if (!file) {
+            res.status(400).json({ success: false, message: 'No media file provided' });
             return;
         }
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(req.file.mimetype)) {
-            res.status(400).json({ success: false, message: 'Invalid file type. Only JPEG, PNG, WEBP allowed.' });
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
+        if (!allowedTypes.includes(file.mimetype)) {
+            res.status(400).json({ success: false, message: 'Invalid file type. Use JPEG, PNG, WEBP, MP4, WEBM, or MOV.' });
             return;
         }
         // Convert buffer to base64 data URI for Cloudinary upload
-        const fileStr = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+        const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
         const result = await cloudinary_1.default.uploader.upload(fileStr, {
             folder: 'vconect',
-            transformation: [{ width: 1200, height: 900, crop: 'limit', quality: 'auto:good' }],
+            resource_type: 'auto',
+            ...(file.mimetype.startsWith('image/') ? { transformation: [{ width: 1200, height: 900, crop: 'limit', quality: 'auto:good' }] } : {}),
         });
         res.json({
             success: true,

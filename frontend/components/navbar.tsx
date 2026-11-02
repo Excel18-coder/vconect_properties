@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Menu, X, Home, Search, Heart, User, LogOut, LayoutDashboard, CreditCard } from 'lucide-react';
+import { Menu, X, Home, Search, Heart, User, LogOut, LayoutDashboard, CreditCard, Sparkles } from 'lucide-react';
 
 export function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -42,6 +42,7 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/properties', label: 'Properties', icon: Search },
+    { href: '/vybz', label: 'VYBZ', icon: Sparkles },
   ];
 
   const dashboardLink = profile?.role === 'admin'
