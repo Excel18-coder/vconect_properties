@@ -315,8 +315,7 @@ export default function PropertyDetailsPage() {
       <Navbar />
       <main className="flex-1">
         <div className="relative h-[400px] sm:h-[500px] bg-gray-900">
-          <Image src={images[currentImage]?.url || images[0]?.url} alt={property.title} fill className="object-cover" />
-          <div className="absolute inset-0 bg-black/20" />
+          <Image src={images[currentImage]?.url || images[0]?.url} alt={property.title} fill className="object-contain" />
           {images.length > 1 && (<>
             <button onClick={() => setCurrentImage((prev) => (prev > 0 ? prev - 1 : images.length - 1))} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors"><ChevronLeft className="h-5 w-5" /></button>
             <button onClick={() => setCurrentImage((prev) => (prev < images.length - 1 ? prev + 1 : 0))} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors"><ChevronRight className="h-5 w-5" /></button>
