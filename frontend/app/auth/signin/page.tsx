@@ -34,7 +34,7 @@ export default function SignInPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <Image src="/images/image.png" alt="VConnect" width={48} height={48} className="rounded-md" />
+              <Image src="/images/vconect-logo.png" alt="VConnect" width={48} height={48} className="rounded-md" />
             </Link>
             <h1 className="text-2xl font-bold text-[#1A1A1A]">Welcome Back</h1>
             <p className="text-gray-500 mt-1">Sign in to your VConnect account</p>

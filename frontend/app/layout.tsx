@@ -7,16 +7,20 @@ export const metadata: Metadata = {
   title: 'Vconect - Find Your Perfect Home',
   description: 'Vconect is a premium real estate marketplace connecting buyers with verified sellers. Discover apartments, houses, villas, and commercial properties.',
   keywords: 'real estate, property, house, apartment, villa, buy, rent, Kenya, Africa',
+  icons: {
+    icon: '/images/vconect-logo.png',
+    apple: '/images/vconect-logo.png',
+  },
   openGraph: {
     title: 'Vconect - Find Your Perfect Home',
     description: 'Premium real estate marketplace connecting buyers with verified sellers.',
     type: 'website',
     images: [
       {
-        url: '/images/image.png',
-        width: 1200,
-        height: 630,
-          alt: 'Vconect',
+        url: '/images/vconect-logo.png',
+        width: 768,
+        height: 768,
+        alt: 'Vconect',
       },
     ],
   },
@@ -24,7 +28,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Vconect',
     description: 'Premium real estate marketplace.',
-    images: ['/images/image.png'],
+    images: ['/images/vconect-logo.png'],
   },
   robots: {
     index: true,

@@ -11,7 +11,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Image src="/images/image.png" alt="vconect" width={40} height={40} className="rounded-md" />
+              <Image src="/images/vconect-logo.png" alt="vconect" width={40} height={40} className="rounded-md" />
               <span className="text-xl font-bold">vconect</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
