@@ -40,6 +40,7 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    void api.post(`/vybz/posts/${post._id}/view`).catch(() => undefined);
     const observer = new IntersectionObserver(([entry]) => {
       if (!videoRef.current) return;
       if (entry.isIntersecting) {
@@ -50,7 +51,7 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
     }, { threshold: 0.65 });
     if (videoRef.current) observer.observe(videoRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [post._id]);
 
   const toggleLike = async () => {
     try {
@@ -192,6 +193,7 @@ export default function VybzPage() {
       }
       await api.post('/vybz/posts', {
         ...form,
+        type: form.category === 'text' ? 'text' : form.type,
         mediaUrl,
         mediaPublicId,
         hashtags: form.hashtags.split(/\s+/).filter(Boolean),
@@ -219,6 +221,15 @@ export default function VybzPage() {
     if (selected?.type.startsWith('video/')) setForm((current) => ({ ...current, type: 'video' }));
   };
 
+  const onCategoryChange = (category: Exclude<VybzCategory, 'all' | 'following' | 'explore'>) => {
+    setForm((current) => ({
+      ...current,
+      category,
+      type: category === 'text' ? 'text' : current.type === 'text' ? 'image' : current.type,
+    }));
+    if (category === 'text') setFile(null);
+  };
+
   if (isLoading) return <><Navbar /><main className="mx-auto max-w-3xl p-8 text-center text-gray-500">Loading VYBZ...</main></>;
   if (!user) return <><Navbar /><main className="flex min-h-[70vh] items-center justify-center bg-[#fff8f8] px-4"><div className="max-w-md text-center"><Sparkles className="mx-auto mb-4 h-12 w-12 text-[#D32F2F]" /><h1 className="text-4xl font-bold">Create. Share. Get Seen. Earn.</h1><p className="mt-3 text-gray-600">Sign in to discover creators and share your VYBZ with the VConnect community.</p><Link href="/auth/signin"><Button className="mt-6 bg-[#D32F2F] text-white">Sign in to VYBZ</Button></Link></div></main></>;
 
@@ -234,7 +245,7 @@ export default function VybzPage() {
         <div className="mb-6 flex gap-2"><div className="relative flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && loadFeed()} placeholder="Search creators, hashtags and posts" className="pl-9" /></div><Button variant="outline" onClick={loadFeed}>Search</Button></div>
         {loading ? <div className="py-16 text-center text-gray-500">Loading your feed...</div> : posts.length === 0 ? <div className="rounded-2xl border border-dashed bg-white py-16 text-center"><Sparkles className="mx-auto mb-3 h-8 w-8 text-[#D32F2F]" /><h2 className="text-xl font-semibold">Your VYBZ feed is ready</h2><p className="mt-1 text-gray-500">Be the first to create something worth seeing.</p><Button onClick={() => setComposerOpen(true)} className="mt-4 bg-[#D32F2F] text-white">Create your first post</Button></div> : <div className="mx-auto grid max-w-2xl gap-6">{posts.map((post) => <PostCard key={post._id} post={post} userId={user._id} onRefresh={loadFeed} />)}</div>}
       </main>
-      {composerOpen && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"><form onSubmit={publish} className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><h2 className="text-xl font-bold">Create a VYBZ</h2><Button type="button" variant="ghost" size="icon" onClick={() => setComposerOpen(false)}><X /></Button></div><div className="space-y-4"><Textarea value={form.caption} onChange={(event) => setForm({ ...form, caption: event.target.value })} placeholder="What are you sharing?" maxLength={2000} /><Input value={form.hashtags} onChange={(event) => setForm({ ...form, hashtags: event.target.value })} placeholder="#travel #inspiration (optional)" /><select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as Exclude<VybzCategory, 'all' | 'following' | 'explore'> })} className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"><option value="videos">Video</option><option value="pictures">Picture</option><option value="memes">Meme</option><option value="stories">Story</option><option value="inspiration">Inspiration</option><option value="art">Art</option><option value="text">Text post</option></select><label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500 hover:border-[#D32F2F]"><Upload className="h-5 w-5" />{file ? file.name : 'Upload an image or video'}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={onFileChange} className="hidden" /></label>{file && <p className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(1)} MB</p>}<Button type="submit" disabled={publishing} className="w-full bg-[#D32F2F] text-white">{publishing ? 'Publishing...' : 'Publish VYBZ'}</Button></div></form></div>}
+      {composerOpen && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"><form onSubmit={publish} className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><h2 className="text-xl font-bold">Create a VYBZ</h2><Button type="button" variant="ghost" size="icon" onClick={() => setComposerOpen(false)}><X /></Button></div><div className="space-y-4"><Textarea value={form.caption} onChange={(event) => setForm({ ...form, caption: event.target.value })} placeholder="What are you sharing?" maxLength={2000} /><Input value={form.hashtags} onChange={(event) => setForm({ ...form, hashtags: event.target.value })} placeholder="#travel #inspiration (optional)" /><select value={form.category} onChange={(event) => onCategoryChange(event.target.value as Exclude<VybzCategory, 'all' | 'following' | 'explore'>)} className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"><option value="videos">Video</option><option value="pictures">Picture</option><option value="memes">Meme</option><option value="stories">Story</option><option value="inspiration">Inspiration</option><option value="art">Art</option><option value="text">Text post</option></select>{form.category !== 'text' && <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500 hover:border-[#D32F2F]"><Upload className="h-5 w-5" />{file ? file.name : 'Upload an image or video'}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={onFileChange} className="hidden" /></label>}{file && <p className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(1)} MB</p>}<Button type="submit" disabled={publishing} className="w-full bg-[#D32F2F] text-white">{publishing ? 'Publishing...' : 'Publish VYBZ'}</Button></div></form></div>}
     </div>
   );
 }

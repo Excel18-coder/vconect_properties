@@ -17,22 +17,44 @@ const postInput = zod_1.z.object({
     mediaUrl: zod_1.z.string().url().optional(),
     mediaPublicId: zod_1.z.string().optional(),
     hashtags: zod_1.z.array(zod_1.z.string().max(50)).max(20).optional().default([]),
+}).superRefine((input, ctx) => {
+    if (input.type === 'text' && input.category !== 'text') {
+        ctx.addIssue({ code: zod_1.z.ZodIssueCode.custom, path: ['category'], message: 'Text posts must use the text category' });
+    }
+    if (input.type !== 'text' && input.category === 'text') {
+        ctx.addIssue({ code: zod_1.z.ZodIssueCode.custom, path: ['type'], message: 'Text category requires a text post' });
+    }
 });
-const populatePost = (query) => query.populate('authorId', 'fullName avatarUrl verificationStatus');
+const populatePost = (query) => query
+    .populate('authorId', 'fullName avatarUrl verificationStatus')
+    .populate('comments.userId', 'fullName avatarUrl verificationStatus');
 router.get('/feed', auth_1.protect, async (req, res) => {
     try {
         const { category, search, following } = req.query;
+        const page = Math.max(Number.parseInt(String(req.query.page || '1'), 10) || 1, 1);
+        const limit = Math.min(Math.max(Number.parseInt(String(req.query.limit || '20'), 10) || 20, 1), 50);
         const filter = {};
         if (typeof category === 'string' && !['all', 'following', 'explore'].includes(category))
             filter.category = category;
         if (typeof search === 'string' && search.trim())
             filter.$text = { $search: search.trim() };
+        const visibleAuthorIds = await User_1.default.find({ verificationStatus: { $ne: 'suspended' } }).distinct('_id');
+        filter.authorId = { $in: visibleAuthorIds };
         if (following === 'true') {
             const follows = await VybzFollow_1.default.find({ followerId: req.user._id }).select('followingId');
-            filter.authorId = { $in: follows.map((follow) => follow.followingId) };
+            filter.authorId = {
+                $in: follows
+                    .map((follow) => String(follow.followingId))
+                    .filter((id) => visibleAuthorIds.some((authorId) => String(authorId) === id)),
+            };
         }
-        const posts = await populatePost(VybzPost_1.default.find(filter).sort({ createdAt: -1 }).limit(50));
+        const [posts, total] = await Promise.all([
+            populatePost(VybzPost_1.default.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit)),
+            VybzPost_1.default.countDocuments(filter),
+        ]);
         res.json({ success: true, data: posts });
+        res.setHeader('X-VYBZ-Page', String(page));
+        res.setHeader('X-VYBZ-Pages', String(Math.ceil(total / limit)));
     }
     catch (error) {
         console.error('VYBZ feed error:', error);
@@ -41,7 +63,8 @@ router.get('/feed', auth_1.protect, async (req, res) => {
 });
 router.get('/explore', auth_1.protect, async (_req, res) => {
     try {
-        const posts = await populatePost(VybzPost_1.default.find().sort({ likes: -1, viewsCount: -1, createdAt: -1 }).limit(30));
+        const visibleAuthorIds = await User_1.default.find({ verificationStatus: { $ne: 'suspended' } }).distinct('_id');
+        const posts = await populatePost(VybzPost_1.default.find({ authorId: { $in: visibleAuthorIds } }).sort({ likes: -1, viewsCount: -1, createdAt: -1 }).limit(30));
         const creators = await User_1.default.find().select('fullName avatarUrl verificationStatus').sort({ createdAt: -1 }).limit(12);
         res.json({ success: true, data: { posts, creators } });
     }
@@ -75,11 +98,16 @@ router.post('/posts', auth_1.protect, async (req, res) => {
 });
 router.post('/posts/:id/view', auth_1.protect, async (req, res) => {
     try {
-        await VybzPost_1.default.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } });
+        const post = await VybzPost_1.default.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } });
+        if (!post) {
+            res.status(404).json({ success: false, message: 'Post not found' });
+            return;
+        }
         res.json({ success: true });
     }
-    catch {
-        res.status(404).json({ success: false, message: 'Post not found' });
+    catch (error) {
+        console.error('VYBZ view error:', error);
+        res.status(500).json({ success: false, message: 'Unable to record view' });
     }
 });
 router.post('/posts/:id/like', auth_1.protect, async (req, res) => {
