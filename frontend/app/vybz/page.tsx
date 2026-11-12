@@ -38,6 +38,7 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
   const [showComments, setShowComments] = useState(false);
   const [muted, setMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const qualifiedViewRecorded = useRef(false);
 
   useEffect(() => {
     void api.post(`/vybz/posts/${post._id}/view`).catch(() => undefined);
@@ -76,6 +77,16 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
     }
   };
 
+  const recordQualifiedView = async () => {
+    if (qualifiedViewRecorded.current || !videoRef.current) return;
+    qualifiedViewRecorded.current = true;
+    try {
+      await api.post(`/vybz/posts/${post._id}/view`, { watchSeconds: videoRef.current.currentTime });
+    } catch {
+      qualifiedViewRecorded.current = false;
+    }
+  };
+
   const follow = async () => {
     if (!author) return;
     try {
@@ -104,7 +115,7 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
       <div className="relative bg-gray-950">
         {post.type === 'video' && post.mediaUrl ? (
           <>
-            <video ref={videoRef} src={post.mediaUrl} className="max-h-[620px] w-full object-contain" loop playsInline muted={muted} controls />
+            <video ref={videoRef} src={post.mediaUrl} onTimeUpdate={() => { if (videoRef.current && videoRef.current.currentTime >= 5) void recordQualifiedView(); }} className="max-h-[620px] w-full object-contain" loop playsInline muted={muted} controls />
             <Button variant="secondary" size="icon" className="absolute bottom-3 left-3 rounded-full bg-black/60 text-white hover:bg-black/80" onClick={() => setMuted(!muted)}>
               {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </Button>
@@ -239,7 +250,7 @@ export default function VybzPage() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D32F2F]">VConnect social</p><h1 className="mt-1 text-4xl font-bold text-[#1A1A1A]">VYBZ</h1><p className="mt-1 text-gray-500">Create. Share. Get Seen. Earn.</p></div>
-          <Button onClick={() => setComposerOpen(true)} className="bg-[#D32F2F] text-white hover:bg-[#B71C1C]"><Plus className="mr-2 h-4 w-4" /> Create VYBZ</Button>
+          <div className="flex gap-2"><Link href="/vybz/analytics"><Button variant="outline">Analytics</Button></Link><Link href="/vybz/wallet"><Button variant="outline">Wallet</Button></Link><Button onClick={() => setComposerOpen(true)} className="bg-[#D32F2F] text-white hover:bg-[#B71C1C]"><Plus className="mr-2 h-4 w-4" /> Create VYBZ</Button></div>
         </div>
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">{categories.map((category) => <button key={category.label} onClick={() => setActive(category.value)} className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium ${active === category.value ? 'bg-[#D32F2F] text-white' : 'bg-white text-gray-600 shadow-sm hover:text-[#D32F2F]'}`}>{category.label}</button>)}</div>
         <div className="mb-6 flex gap-2"><div className="relative flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && loadFeed()} placeholder="Search creators, hashtags and posts" className="pl-9" /></div><Button variant="outline" onClick={loadFeed}>Search</Button></div>

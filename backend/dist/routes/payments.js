@@ -3,11 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.extractGatewayReference = extractGatewayReference;
+exports.buildPayHeroHeaders = buildPayHeroHeaders;
+exports.getPayHeroBaseUrl = getPayHeroBaseUrl;
 const express_1 = require("express");
 const zod_1 = require("zod");
 const Payment_1 = __importDefault(require("../models/Payment"));
 const User_1 = __importDefault(require("../models/User"));
 const auth_1 = require("../middleware/auth");
+const vybzPayouts_1 = require("../services/vybzPayouts");
 const router = (0, express_1.Router)();
 const sellerPlans = {
     pro: { id: 'pro', name: 'Professional', role: 'seller', monthly: 500, yearly: 500 },
@@ -533,6 +537,11 @@ router.post('/webhook/payhero', async (req, res) => {
             readGatewayValue(payload?.data || {}, ['status', 'paymentStatus', 'payment_status', 'state', 'ResultDesc', 'resultDesc']));
         if (!reference) {
             res.status(400).json({ success: false, message: 'Missing payment reference' });
+            return;
+        }
+        if (String(reference).startsWith('VYW-')) {
+            const result = await (0, vybzPayouts_1.reconcileVybzPayout)(String(reference), status, String(readGatewayValue(payload, ['providerReference', 'transactionReference', 'transaction_id', 'receipt']) || ''));
+            res.json({ success: true, data: result });
             return;
         }
         const payment = await findPaymentForWebhook(String(reference));

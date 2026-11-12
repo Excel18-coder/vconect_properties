@@ -69,6 +69,12 @@ The frontend is trying to fetch from the wrong URLs. This is a **Vercel environm
 - `PAYHERO_SUCCESS_URL`
 - `PAYHERO_FAILURE_URL`
 
+VYBZ creator payouts reuse the existing PayHero base URL, authentication, and
+account configuration. PayHero discovery must return an active Kenya mobile-money
+network with `ramp_type: withdraw`; otherwise payout execution is rejected and no
+payment is simulated. The callback uses the existing
+`/api/payments/webhook/payhero` endpoint.
+
 ---
 
 **The key is: ALWAYS set environment variables in the platform's dashboard, not in .env files in production!**

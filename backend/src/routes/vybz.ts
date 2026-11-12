@@ -1,9 +1,12 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
+import mongoose from 'mongoose';
 import VybzPost from '../models/VybzPost';
 import VybzFollow from '../models/VybzFollow';
 import User from '../models/User';
 import { protect, AuthRequest } from '../middleware/auth';
+import VybzEngagementEvent from '../models/VybzEngagementEvent';
+import { createPendingReward, getVybzRewardConfig, recordQualifiedView } from '../services/vybzRewards';
 
 const router = Router();
 const postInput = z.object({
@@ -94,12 +97,22 @@ router.post('/posts', protect, async (req: AuthRequest, res: Response) => {
 
 router.post('/posts/:id/view', protect, async (req: AuthRequest, res: Response) => {
     try {
-        const post = await VybzPost.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } });
+        const post = await VybzPost.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }, { new: true });
         if (!post) {
             res.status(404).json({ success: false, message: 'Post not found' });
             return;
         }
-        res.json({ success: true });
+        const watchSeconds = z.number().min(0).max(86400).optional().parse(req.body?.watchSeconds);
+        const qualified = watchSeconds === undefined
+            ? { qualified: false, reason: 'watch_duration_required' }
+            : await recordQualifiedView({
+                postId: post._id,
+                creatorId: post.authorId,
+                viewerId: req.user!._id,
+                watchSeconds,
+                qualificationKey: new Date().toISOString().slice(0, 10),
+            });
+        res.json({ success: true, qualified: qualified.qualified });
     } catch (error) {
         console.error('VYBZ view error:', error);
         res.status(500).json({ success: false, message: 'Unable to record view' });
@@ -114,9 +127,53 @@ router.post('/posts/:id/like', protect, async (req: AuthRequest, res: Response) 
             return;
         }
         const userId = req.user!._id;
+        if (post.authorId.equals(userId)) {
+            res.status(400).json({ success: false, message: 'You cannot like your own post' });
+            return;
+        }
         const index = post.likes.findIndex((id) => id.equals(userId));
         if (index >= 0) post.likes.splice(index, 1);
-        else post.likes.push(userId);
+        else {
+            post.likes.push(userId);
+            const config = await getVybzRewardConfig();
+            if (config.rewardsActive) {
+                try {
+                    await VybzEngagementEvent.create({
+                        postId: post._id,
+                        creatorId: post.authorId,
+                        viewerId: userId,
+                        type: 'like',
+                        status: 'qualified',
+                        qualificationKey: 'lifetime',
+                    });
+                    await createPendingReward({
+                        userId: post.authorId,
+                        postId: post._id,
+                        type: 'like_reward',
+                        coins: config.coinsPerLike,
+                        sourceKey: `like:${post._id}:${userId}`,
+                        description: 'Eligible unique like',
+                    });
+                    const eligibleLikes = await VybzEngagementEvent.countDocuments({
+                        postId: post._id,
+                        type: 'like',
+                        status: 'qualified',
+                    });
+                    if (eligibleLikes === config.likeBonusThreshold) {
+                        await createPendingReward({
+                            userId: post.authorId,
+                            postId: post._id,
+                            type: 'bonus',
+                            coins: config.likeBonusCoins,
+                            sourceKey: `bonus:like:${post._id}:${config.likeBonusThreshold}`,
+                            description: `${config.likeBonusThreshold} eligible like bonus`,
+                        });
+                    }
+                } catch (error: any) {
+                    if (error?.code !== 11000) throw error;
+                }
+            }
+        }
         await post.save();
         res.json({ success: true, liked: index < 0, likesCount: post.likes.length });
     } catch {

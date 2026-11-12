@@ -10,9 +10,10 @@ import uploadRoutes from './routes/upload';
 import inquiryRoutes from './routes/inquiries';
 import favoriteRoutes from './routes/favorites';
 import profileRoutes from './routes/profile';
-import adminRoutes from './routes/admin';
+import adminRoutes, { vybzPayoutCallbackRouter } from './routes/admin';
 import paymentRoutes from './routes/payments';
 import vybzRoutes from './routes/vybz';
+import vybzRewardsRoutes from './routes/vybzRewards';
 
 const app = express();
 
@@ -127,10 +128,12 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/profile', profileRoutes);
 
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin', vybzPayoutCallbackRouter);
 
 app.use('/api/payments', paymentRoutes);
 
 app.use('/api/vybz', vybzRoutes);
+app.use('/api/vybz', vybzRewardsRoutes);
 
 
 // ===============================

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import Payment from '../models/Payment';
 import User from '../models/User';
 import { protect, AuthRequest } from '../middleware/auth';
+import { reconcileVybzPayout } from '../services/vybzPayouts';
 
 const router = Router();
 
@@ -125,7 +126,7 @@ function extractGatewayPayload(response: PayHeroGatewayResponse) {
     return nestedPayload as PayHeroGatewayResponse;
 }
 
-function extractGatewayReference(response: PayHeroGatewayResponse) {
+export function extractGatewayReference(response: PayHeroGatewayResponse) {
     const payload = extractGatewayPayload(response);
     return readGatewayValue(payload, [
         'reference',
@@ -155,7 +156,7 @@ function normalizeGatewayStatus(value?: string) {
     return String(value || '').toLowerCase().replace(/\s+/g, '_');
 }
 
-function buildPayHeroHeaders() {
+export function buildPayHeroHeaders() {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const authToken = process.env.PAYHERO_AUTH_TOKEN || process.env.PAYHERO_API_TOKEN;
 
@@ -176,7 +177,7 @@ function buildPayHeroHeaders() {
     return headers;
 }
 
-function getPayHeroBaseUrl() {
+export function getPayHeroBaseUrl() {
     return (process.env.PAYHERO_BASE_URL || 'https://backend.payhero.co.ke').replace(/\/+$/, '');
 }
 
@@ -663,6 +664,16 @@ router.post('/webhook/payhero', async (req, res: ExpressResponse) => {
 
         if (!reference) {
             res.status(400).json({ success: false, message: 'Missing payment reference' });
+            return;
+        }
+
+        if (String(reference).startsWith('VYW-')) {
+            const result = await reconcileVybzPayout(
+                String(reference),
+                status,
+                String(readGatewayValue(payload, ['providerReference', 'transactionReference', 'transaction_id', 'receipt']) || '')
+            );
+            res.json({ success: true, data: result });
             return;
         }
 

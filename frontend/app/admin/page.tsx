@@ -23,6 +23,7 @@ import {
   BarChart3,
   Settings,
   UserCheck,
+  Coins,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,6 +45,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [vybzWithdrawals, setVybzWithdrawals] = useState<any[]>([]);
+  const [vybzSummary, setVybzSummary] = useState<any>(null);
+  const [vybzFraudFlags, setVybzFraudFlags] = useState<any[]>([]);
 
   useEffect(() => {
     if (user?.role !== 'admin') return;
@@ -53,21 +57,48 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, propsRes, inqsRes]: any[] = await Promise.all([
+      const [statsRes, usersRes, propsRes, inqsRes, vybzRes]: any[] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/users'),
         api.get('/admin/properties'),
         api.get('/inquiries'),
+        api.get('/admin/vybz/rewards'),
       ]);
 
       if (statsRes.success) setStats(statsRes.data);
       if (usersRes.success) setUsers(usersRes.data);
       if (propsRes.success) setProperties(propsRes.data);
       if (inqsRes.success) setInquiries(inqsRes.data);
+      if (vybzRes.success) setVybzSummary(vybzRes.data);
+      const withdrawalsRes: any = await api.get('/admin/vybz/withdrawals');
+      if (withdrawalsRes.success) setVybzWithdrawals(withdrawalsRes.data);
+      const fraudRes: any = await api.get('/admin/vybz/fraud-flags');
+      if (fraudRes.success) setVybzFraudFlags(fraudRes.data);
     } catch (error) {
       toast.error('Failed to load admin data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const reviewVybzFlag = async (id: string, status: 'dismissed' | 'confirmed') => {
+    try {
+      await api.put(`/admin/vybz/fraud-flags/${id}`, { status });
+      setVybzFraudFlags((flags) => flags.filter((flag) => flag._id !== id));
+      toast.success('Fraud flag reviewed');
+    } catch {
+      toast.error('Unable to review fraud flag');
+    }
+  };
+
+  const updateVybzWithdrawal = async (id: string, action: 'approve' | 'reject' | 'pay') => {
+    try {
+      await api.post(`/admin/vybz/withdrawals/${id}/${action}`, action === 'reject' ? { reason: 'Rejected during administrator review' } : {});
+      const response: any = await api.get('/admin/vybz/withdrawals');
+      setVybzWithdrawals(response.data || []);
+      toast.success(`Withdrawal ${action} request completed`);
+    } catch (error: any) {
+      toast.error(error?.message || `Unable to ${action} withdrawal`);
     }
   };
 
@@ -130,6 +161,7 @@ export default function AdminDashboard() {
     { id: 'listings', label: 'Listings', icon: Building2 },
     { id: 'inquiries', label: 'Inquiries', icon: MessageSquare },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'vybz', label: 'VYBZ Rewards', icon: Coins },
   ];
 
   if (user?.role !== 'admin' || user?.email !== 'vconectproperties@gmail.com') {
@@ -451,6 +483,24 @@ export default function AdminDashboard() {
                     );
                   })}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'vybz' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <div className="rounded-xl border bg-white p-5"><p className="text-sm text-gray-500">Pending</p><p className="text-2xl font-bold">{vybzSummary?.counts?.pending || 0}</p></div>
+                <div className="rounded-xl border bg-white p-5"><p className="text-sm text-gray-500">Paid</p><p className="text-2xl font-bold">{vybzSummary?.counts?.paid || 0}</p></div>
+                <div className="rounded-xl border bg-white p-5"><p className="text-sm text-gray-500">Gross KES</p><p className="text-2xl font-bold">{vybzSummary?.totals?.grossKes || 0}</p></div>
+                <div className="rounded-xl border bg-white p-5"><p className="text-sm text-gray-500">Net KES</p><p className="text-2xl font-bold">{vybzSummary?.totals?.netKes || 0}</p></div>
+              </div>
+              <div className="overflow-x-auto rounded-xl border bg-white">
+                <table className="w-full text-sm"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Reference</th><th className="px-4 py-3 text-left">Member</th><th className="px-4 py-3 text-left">Coins</th><th className="px-4 py-3 text-left">Net KES</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr></thead><tbody className="divide-y">{vybzWithdrawals.map((item) => <tr key={item._id}><td className="px-4 py-3">{item.reference}</td><td className="px-4 py-3">{item.userId?.fullName || 'Member'}<br /><span className="text-xs text-gray-500">{item.phone}</span></td><td className="px-4 py-3">{item.coins.toLocaleString()}</td><td className="px-4 py-3">KSh {item.netKes.toLocaleString()}</td><td className="px-4 py-3 capitalize">{item.status}</td><td className="px-4 py-3"><div className="flex gap-1">{item.status === 'pending' && <><Button size="sm" onClick={() => updateVybzWithdrawal(item._id, 'approve')}>Approve</Button><Button size="sm" variant="outline" onClick={() => updateVybzWithdrawal(item._id, 'reject')}>Reject</Button></>}{item.status === 'approved' && <Button size="sm" onClick={() => updateVybzWithdrawal(item._id, 'pay')}>Initiate payout</Button>}</div></td></tr>)}</tbody></table>
+              </div>
+              <div className="rounded-xl border bg-white p-5">
+                <h2 className="mb-4 text-lg font-semibold">Open fraud review queue</h2>
+                {vybzFraudFlags.length === 0 ? <p className="text-sm text-gray-500">No open flags.</p> : <div className="space-y-3">{vybzFraudFlags.map((flag) => <div key={flag._id} className="flex items-center justify-between gap-3 border-b pb-3 text-sm"><span>{flag.reason}<br /><span className="text-gray-500">{flag.userId?.fullName || 'Member'} - {flag.eventType}</span></span><span className="flex gap-1"><Button size="sm" variant="outline" onClick={() => reviewVybzFlag(flag._id, 'dismissed')}>Dismiss</Button><Button size="sm" onClick={() => reviewVybzFlag(flag._id, 'confirmed')}>Confirm</Button></span></div>)}</div>}
               </div>
             </div>
           )}
