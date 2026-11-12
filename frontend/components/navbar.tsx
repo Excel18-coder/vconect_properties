@@ -117,6 +117,11 @@ export function Navbar() {
                         <CreditCard className="h-4 w-4" /> Payments
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/vybz/wallet" className="flex items-center gap-2 cursor-pointer">
+                        <Sparkles className="h-4 w-4" /> VYBZ Wallet
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer">
                       <LogOut className="h-4 w-4 mr-2" /> Sign Out
@@ -157,6 +162,9 @@ export function Navbar() {
                 </Link>
                 <Link href="/payments" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-[#D32F2F] hover:bg-red-50 rounded-lg" onClick={() => setMobileOpen(false)}>
                   <CreditCard className="h-5 w-5" /> Payments
+                </Link>
+                <Link href="/vybz/wallet" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-[#D32F2F] hover:bg-red-50 rounded-lg" onClick={() => setMobileOpen(false)}>
+                  <Sparkles className="h-5 w-5" /> VYBZ Wallet
                 </Link>
                 <button onClick={() => { signOut(); setMobileOpen(false); }} className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg w-full">
                   <LogOut className="h-5 w-5" /> Sign Out
