@@ -52,7 +52,7 @@ router.get('/feed', auth_1.protect, async (req, res) => {
             };
         }
         const [posts, total] = await Promise.all([
-            populatePost(VybzPost_1.default.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit)),
+            populatePost(VybzPost_1.default.find(filter).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit)),
             VybzPost_1.default.countDocuments(filter),
         ]);
         res.setHeader('X-VYBZ-Page', String(page));
