@@ -1,0 +1,1 @@
+{"version":3,"file":"VybzSavedPost.d.ts","sourceRoot":"","sources":["../../src/models/VybzSavedPost.ts"],"names":[],"mappings":"AAAA,OAAO,QAAQ,EAAE,EAAE,QAAQ,EAAU,MAAM,UAAU,CAAC;AAEtD,MAAM,WAAW,cAAe,SAAQ,QAAQ;IAC5C,MAAM,EAAE,QAAQ,CAAC,KAAK,CAAC,QAAQ,CAAC;IAChC,MAAM,EAAE,QAAQ,CAAC,KAAK,CAAC,QAAQ,CAAC;IAChC,SAAS,EAAE,IAAI,CAAC;CACnB;;;;;;AAYD,wBAAuE"}

@@ -10,6 +10,7 @@ const VybzFollow_1 = __importDefault(require("../models/VybzFollow"));
 const User_1 = __importDefault(require("../models/User"));
 const auth_1 = require("../middleware/auth");
 const VybzEngagementEvent_1 = __importDefault(require("../models/VybzEngagementEvent"));
+const VybzSavedPost_1 = __importDefault(require("../models/VybzSavedPost"));
 const vybzRewards_1 = require("../services/vybzRewards");
 const router = (0, express_1.Router)();
 const postInput = zod_1.z.object({
@@ -67,7 +68,7 @@ router.get('/explore', auth_1.protect, async (_req, res) => {
     try {
         const visibleAuthorIds = await User_1.default.find({ verificationStatus: { $ne: 'suspended' } }).distinct('_id');
         const posts = await populatePost(VybzPost_1.default.find({ authorId: { $in: visibleAuthorIds } }).sort({ likes: -1, viewsCount: -1, createdAt: -1 }).limit(30));
-        const creators = await User_1.default.find().select('fullName avatarUrl verificationStatus').sort({ createdAt: -1 }).limit(12);
+        const creators = await User_1.default.find({ verificationStatus: { $ne: 'suspended' } }).select('fullName avatarUrl verificationStatus').sort({ createdAt: -1 }).limit(12);
         res.json({ success: true, data: { posts, creators } });
     }
     catch (error) {
@@ -100,12 +101,15 @@ router.post('/posts', auth_1.protect, async (req, res) => {
 });
 router.post('/posts/:id/view', auth_1.protect, async (req, res) => {
     try {
-        const post = await VybzPost_1.default.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }, { new: true });
+        const post = await VybzPost_1.default.findById(req.params.id);
         if (!post) {
             res.status(404).json({ success: false, message: 'Post not found' });
             return;
         }
         const watchSeconds = zod_1.z.number().min(0).max(86400).optional().parse(req.body?.watchSeconds);
+        if (watchSeconds === undefined) {
+            await VybzPost_1.default.updateOne({ _id: post._id }, { $inc: { viewsCount: 1 } });
+        }
         const qualified = watchSeconds === undefined
             ? { qualified: false, reason: 'watch_duration_required' }
             : await (0, vybzRewards_1.recordQualifiedView)({
@@ -199,6 +203,27 @@ router.post('/posts/:id/comments', auth_1.protect, async (req, res) => {
     }
     catch {
         res.status(400).json({ success: false, message: 'Comment must contain 1 to 500 characters' });
+    }
+});
+router.post('/posts/:id/bookmark', auth_1.protect, async (req, res) => {
+    try {
+        const post = await VybzPost_1.default.exists({ _id: req.params.id });
+        if (!post) {
+            res.status(404).json({ success: false, message: 'Post not found' });
+            return;
+        }
+        const existing = await VybzSavedPost_1.default.findOne({ userId: req.user._id, postId: req.params.id });
+        if (existing) {
+            await existing.deleteOne();
+            res.json({ success: true, saved: false });
+            return;
+        }
+        await VybzSavedPost_1.default.create({ userId: req.user._id, postId: req.params.id });
+        res.json({ success: true, saved: true });
+    }
+    catch (error) {
+        console.error('VYBZ bookmark error:', error);
+        res.status(500).json({ success: false, message: 'Unable to update saved VYBZ' });
     }
 });
 router.post('/follow/:userId', auth_1.protect, async (req, res) => {

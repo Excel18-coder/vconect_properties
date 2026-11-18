@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import {
-  Bookmark, Check, ChevronDown, Heart, MessageCircle, MoreHorizontal, Play, Plus,
-  Search, Send, Sparkles, Upload, UserPlus, Volume2, VolumeX, X,
+  Bookmark, Check, Heart, MessageCircle, Plus, Search, Send, Share2, Sparkles,
+  Upload, UserPlus, Volume2, VolumeX, X,
 } from 'lucide-react';
 
 const categories: { label: string; value: VybzCategory }[] = [
@@ -37,6 +37,8 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
   const [comment, setComment] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [following, setFollowing] = useState(false);
+  const [saved, setSaved] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const qualifiedViewRecorded = useRef(false);
 
@@ -90,10 +92,35 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
   const follow = async () => {
     if (!author) return;
     try {
-      await api.post(`/vybz/follow/${author._id}`);
-      toast.success(`Creator ${author.fullName} updated`);
+      const response: any = await api.post(`/vybz/follow/${author._id}`);
+      setFollowing(Boolean(response.following));
+      toast.success(response.following ? `Following ${author.fullName}` : `Unfollowed ${author.fullName}`);
     } catch {
       toast.error('Unable to update follow');
+    }
+  };
+
+  const share = async () => {
+    const url = `${window.location.origin}/vybz?post=${post._id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'VYBZ', text: post.caption || 'Check out this VYBZ', url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success('VYBZ link copied');
+      }
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') toast.error('Unable to share this VYBZ');
+    }
+  };
+
+  const toggleSaved = async () => {
+    try {
+      const response: any = await api.post(`/vybz/posts/${post._id}/bookmark`);
+      setSaved(Boolean(response.saved));
+      toast.success(response.saved ? 'VYBZ saved' : 'Removed from saved VYBZ');
+    } catch {
+      toast.error('Unable to update saved VYBZ');
     }
   };
 
@@ -109,7 +136,7 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
             <p className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={follow} aria-label="Follow creator"><UserPlus className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" onClick={follow} aria-label={following ? 'Unfollow creator' : 'Follow creator'}><UserPlus className={`h-4 w-4 ${following ? 'text-[#D32F2F]' : ''}`} /></Button>
       </div>
 
       <div className="relative bg-gray-950">
@@ -133,8 +160,8 @@ function PostCard({ post, userId, onRefresh }: { post: VybzPost; userId: string;
           <span className="mr-3 text-sm text-gray-600">{formatCount(likes)}</span>
           <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} aria-label="Show comments"><MessageCircle /></Button>
           <span className="text-sm text-gray-600">{post.comments.length}</span>
-          <Button variant="ghost" size="icon" className="ml-auto" aria-label="Save post"><Bookmark /></Button>
-          <Button variant="ghost" size="icon" aria-label="Share post"><Send /></Button>
+          <Button variant="ghost" size="icon" className={`ml-auto ${saved ? 'text-[#D32F2F]' : ''}`} aria-label={saved ? 'Remove saved post' : 'Save post'} onClick={toggleSaved}><Bookmark className={saved ? 'fill-current' : ''} /></Button>
+          <Button variant="ghost" size="icon" aria-label="Share post" onClick={share}><Share2 /></Button>
         </div>
         <p className="mt-2 whitespace-pre-wrap text-sm text-gray-800">{post.caption}</p>
         {post.hashtags.length > 0 && <p className="mt-2 text-sm font-medium text-[#D32F2F]">{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p>}
@@ -191,6 +218,10 @@ export default function VybzPage() {
       toast.error('Add a caption before publishing');
       return;
     }
+    if (form.type !== 'text' && !file) {
+      toast.error('Add an image or video before publishing');
+      return;
+    }
     setPublishing(true);
     try {
       let mediaUrl: string | undefined;
@@ -233,10 +264,11 @@ export default function VybzPage() {
   };
 
   const onCategoryChange = (category: Exclude<VybzCategory, 'all' | 'following' | 'explore'>) => {
+    const type = category === 'text' ? 'text' : category === 'videos' ? 'video' : 'image';
     setForm((current) => ({
       ...current,
       category,
-      type: category === 'text' ? 'text' : current.type === 'text' ? 'image' : current.type,
+      type,
     }));
     if (category === 'text') setFile(null);
   };
